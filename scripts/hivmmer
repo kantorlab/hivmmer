@@ -1,0 +1,80 @@
+#!/bin/bash
+set -e
+VERSION="0.1.0"
+
+### ARGUMENTS ###
+
+function usage() {
+  echo "\
+usage: hivmmer --id ID --fq1 FASTQ1 --fq2 FASTQ2 --ref REFERENCE [--cpu N]
+               [-h|--help] [-v|--version]
+
+"
+}
+
+OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu: -n 'parse-options' -- "$@"`
+eval set -- "$OPTS"
+
+ID=
+FQ1=
+FQ2=
+REF=
+CPU=1
+
+while true; do
+  case "$1" in
+    -h|--help) usage; exit 0 ;;
+    -v|--version) echo "hivmmer $VERSION"; exit 0 ;;
+    --id)  ID="$2";  shift 2 ;;
+    --fq1) FQ1="$2"; shift 2 ;;
+    --fq2) FQ2="$2"; shift 2 ;;
+    --ref) REF="$2"; shift 2 ;;
+    --cpu) CPU="$2"; shift 2 ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+
+echo "ID:  $ID"
+echo "FQ1: $FQ1"
+echo "FQ2: $FQ2"
+echo "REF: $REF"
+echo "CPU: $CPU"
+
+if [ -z "$ID" ] || [ -z "$FQ1" ] || [ -z "$FQ2" ] || [ -z "$REF" ]
+then
+  usage
+  exit 1
+fi
+
+### PIPELINE ###
+
+echo "### STAGE 1: PEAR ###"
+
+pear -y 3G -f $FQ1 -r $FQ2 -o ${ID}.pear -k -j $CPU
+
+echo "### STAGE 2: FASTX_COLLAPSER ###"
+
+cat ${ID}.pear.*.fastq | fastx_collapser -Q33 -o ${ID}.collapsed.fa
+
+echo "### STAGE 3: TRANSLATE ###"
+
+hivmmer-translate ${ID}.collapsed.fa >${ID}.collapsed.pfa
+
+echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
+
+hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt ${REF} ${ID}.collapsed.pfa
+hmmbuild --cpu $CPU ${ID}.hmmsearch1.hmm ${ID}.hmmsearch1.sto
+
+echo "### STAGE 5: HMMSEARCH, ROUND 2 ###"
+
+hmmsearch --cpu $CPU -E 1000000 --domE 1000000 --max --notextw -A ${ID}.hmmsearch2.sto -o ${ID}.hmmsearch2.txt ${ID}.hmmsearch1.hmm ${ID}.collapsed.pfa
+hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
+
+echo "### STAGE 6: CODON TABLE ###"
+
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt >${ID}.hmmsearch1.codons.csv &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt >${ID}.hmmsearch2.codons.csv &
+wait
+
+echo "### FINISHED ###"

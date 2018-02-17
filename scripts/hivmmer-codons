@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+import argparse
+import pandas as pd
+import numpy as np
+import sys
+
+from Bio import SearchIO
+from Bio import Seq
+from Bio import SeqIO
+from itertools import chain, product
+
+min_score = 1.5
+nts = ("A", "C", "G", "T")
+codons = list(chain(list(map("".join, product(list(map("".join, product(nts, nts))), nts))), ["del", "ins"]))
+lookup = dict((codon, i) for (i, codon) in enumerate(codons))
+
+def parse_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--hmmer",
+                      required=True,
+                      help="path to HMMER text output")
+  parser.add_argument("--reads",
+                      required=True,
+                      help="path to amino acid FASTA file aligned with HMMER")
+  return parser.parse_args()
+
+
+def codon_table(reads, hmmer):
+
+  nref = max(f.query_end for f in hmmer.fragments)
+
+  table = np.zeros((nref, len(codons)), dtype=np.uint32)
+
+  n_hsps = {}
+
+  for hit in hmmer.hits:
+
+    id, _, frame = hit.id.rpartition("-")
+    count = int(id.partition("-")[2])
+
+    if frame.endswith("'"):
+      seq = reads[id].seq.reverse_complement()
+      offset = int(frame[:-1])
+    else:
+      seq = reads[id].seq
+      offset = int(frame)
+
+    # Track number of hsps in each hit
+    n_hsps[len(hit.hsps)] = n_hsps.get(len(hit.hsps), 0) + 1
+
+    for hsp in hit.hsps:
+
+      if (hsp.bitscore / hsp.hit_span) < min_score: continue
+
+      i = 3*hsp.hit_start + offset
+      j = 0
+
+      for aa, pp in zip(hsp.aln[1].seq, hsp.aln_annotation["PP"]):
+        if aa.islower():
+          codon = "ins"
+        elif aa == "-":
+          codon = "del"
+        else:
+          codon = str(seq[i:i+3])
+          assert aa == Seq.translate(codon)
+        table[hsp.query_start+j, lookup[codon]] += count
+        j += (codon != "ins")
+        i += 3*(codon != "del")
+
+  print("hsps:", n_hsps, file=sys.stderr)
+
+  return table
+
+
+if __name__ == "__main__":
+  args = parse_args()
+
+  reads = SeqIO.index(args.reads, "fasta")
+  print("indexed reads", file=sys.stderr)
+
+  hmmer = SearchIO.read(args.hmmer, "hmmer3-text")
+  print("parsed hmmer", file=sys.stderr)
+
+  table = codon_table(reads, hmmer)
+  table = pd.DataFrame(table, columns=codons)
+  table.to_csv(sys.stdout, index_label="AA_Index")
+
+# vim: expandtab sw=2 ts=2

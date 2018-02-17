@@ -1,0 +1,32 @@
+package:
+  name: hivmmer
+  version: 0.1.0
+
+source:
+  git_url: https://github.com/mhowison/hivmmer
+  git_tag: v0.1.0
+
+requirements:
+  build:
+    - python
+    - biopython ==1.69
+    - numpy ==0.13.0
+    - pandas ==0.22.0
+  run:
+    - python
+    - biopython ==1.69
+    - numpy ==0.13.0
+    - pandas ==0.22.0
+
+test:
+  commands:
+    - hivmmer -h
+    - hivmmer-codons -h
+    - hivmmer-translate -h
+
+about:
+  home: https://github.com/mhowison/hivmmer
+  summary: "An alignment and variant-calling pipeline for Illumina deep sequencing of
+            HIV-1, based on the probabilistic aligner HMMER."
+  license: BSD-like
+  license_file: LICENSE
