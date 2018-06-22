@@ -64,17 +64,19 @@ hivmmer-translate ${ID}.collapsed.fa >${ID}.collapsed.pfa
 echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
 
 hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt ${REF} ${ID}.collapsed.pfa
+hmmemit -c $REF >${REF}.consensus.fa
 hmmbuild --cpu $CPU ${ID}.hmmsearch1.hmm ${ID}.hmmsearch1.sto
 
 echo "### STAGE 5: HMMSEARCH, ROUND 2 ###"
 
 hmmsearch --cpu $CPU -E 1000000 --domE 1000000 --max --notextw -A ${ID}.hmmsearch2.sto -o ${ID}.hmmsearch2.txt ${ID}.hmmsearch1.hmm ${ID}.collapsed.pfa
+hmmemit -c ${ID}.hmmsearch1.hmm >${ID}.hmmsearch1.hmm.consensus.fa
 hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
 
 echo "### STAGE 6: CODON TABLE ###"
 
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt >${ID}.hmmsearch1.codons.csv &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt >${ID}.hmmsearch2.codons.csv &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${REF}.consensus.fa &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch1.hmm.consensus.fa &
 wait
 
 echo "### FINISHED ###"
