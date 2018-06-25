@@ -105,7 +105,9 @@ def codon_table(reads, hmmer):
 def print_aavf(table, ref, out):
   """
   """
-  refseq = str(next(SeqIO.parse(ref, "fasta")).seq)
+  refseq = next(SeqIO.parse(ref, "fasta"))
+  chrom = refseq.id
+  refseq = str(refseq.seq)
 
   # Metadata
   print("""\
@@ -116,7 +118,8 @@ def print_aavf(table, ref, out):
 ##INFO=<ID=AC,Number=.,Type=String,Description="Alternate Codon">
 ##INFO=<ID=ACC,Number=.,Type=Float,Description="Alternate Codon Count, for each Alternate Codon, in the same order as listed.">
 ##INFO=<ID=ACF,Number=.,Type=Float,Description="Alternate Codon Frequency, for each Alternate Codon, in the same order as listed.">
-##FILTER=<ID=af0.01,Description="Set if True; alt_freq<0.01">""".format(
+##FILTER=<ID=cov10,Description="Alternate Count < 10">
+##FILTER=<ID=freq0.01,Description="Alternate Frequency < 0.01">""".format(
       date=datetime.now().strftime("%Y%m%d %H:%M:%S"),
       source="hivmmer-{}".format(version),
       ref=ref),
@@ -129,7 +132,8 @@ def print_aavf(table, ref, out):
 
   # Rows
   for i, row in enumerate(table):
-    norm = 1.0 / row.sum()
+    cov = row.sum()
+    norm = 1.0 / cov
     if i >= 99:
       gene = "RT"
       pos = i - 98
@@ -149,10 +153,16 @@ def print_aavf(table, ref, out):
       if len(ac) > 0:
         count = sum(acc)
         freq = count * norm
-        print("pol", gene, pos, refseq[i], aa, ("PASS" if freq < 0.01 else "af0.01"),
-              freq, count, "AC={};ACC={};ACF={}".format(",".join(ac),
-                                                        ",".join(map(str, acc)),
-                                                        ",".join(map(str, acf))),
+        if count < 10:
+            filt = "cov10"
+        elif freq < 0.01:
+            filt = "freq0.01"
+        else:
+            filt = "PASS"
+        print(chrom, gene, pos, refseq[i], aa, filt,
+              freq, cov, "AC={};ACC={};ACF={}".format(",".join(ac),
+                                                      ",".join(map(str, acc)),
+                                                      ",".join(map(str, acf))),
               sep="\t", file=out)
 
 
