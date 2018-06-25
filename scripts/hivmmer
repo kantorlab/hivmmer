@@ -51,7 +51,7 @@ fi
 
 echo "### STAGE 1: PEAR ###"
 
-pear -y 3G -f $FQ1 -r $FQ2 -o ${ID}.pear -k -j $CPU
+pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
 
 echo "### STAGE 2: FASTX_COLLAPSER ###"
 
@@ -63,20 +63,20 @@ hivmmer-translate ${ID}.collapsed.fa >${ID}.collapsed.pfa
 
 echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
 
-hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt ${REF} ${ID}.collapsed.pfa
-hmmemit -c $REF >${REF}.consensus.fa
+hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt "$REF" ${ID}.collapsed.pfa
+hmmemit -c "$REF" >${ID}.hmmsearch1.ref.consensus.fa
 hmmbuild --cpu $CPU ${ID}.hmmsearch1.hmm ${ID}.hmmsearch1.sto
 
 echo "### STAGE 5: HMMSEARCH, ROUND 2 ###"
 
 hmmsearch --cpu $CPU -E 1000000 --domE 1000000 --max --notextw -A ${ID}.hmmsearch2.sto -o ${ID}.hmmsearch2.txt ${ID}.hmmsearch1.hmm ${ID}.collapsed.pfa
-hmmemit -c ${ID}.hmmsearch1.hmm >${ID}.hmmsearch1.hmm.consensus.fa
+hmmemit -c ${ID}.hmmsearch1.hmm >${ID}.hmmsearch2.ref.consensus.fa
 hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
 
 echo "### STAGE 6: CODON TABLE ###"
 
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${REF}.consensus.fa &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch1.hmm.consensus.fa &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa &
 wait
 
 echo "### FINISHED ###"
