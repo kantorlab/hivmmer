@@ -178,7 +178,7 @@ if __name__ == "__main__":
   table = codon_table(reads, hmmer)
   print("constructed codon table", file=sys.stderr)
 
-  basename = os.path.splitext(os.path.basename(args.hmmer))[0]
+  basename = os.path.splitext(args.hmmer)[0]
 
   # CSV output
   np.savetxt(basename + ".codons.csv", table, fmt="%g",
