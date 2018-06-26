@@ -181,7 +181,7 @@ if __name__ == "__main__":
   basename = os.path.splitext(args.hmmer)[0]
 
   # CSV output
-  np.savetxt(basename + ".codons.csv", table, fmt="%g",
+  np.savetxt(basename + ".codons.csv", table, fmt="%g", comments="",
              delimiter=",", header=",".join(codons))
 
   # AAVF output
