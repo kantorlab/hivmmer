@@ -12,7 +12,7 @@ from Bio import SeqIO
 from datetime import datetime
 from itertools import chain, product
 
-version = "0.1.0"
+version = "0.1.1"
 min_score = 1.5
 nt = ("A", "C", "G", "T")
 aa_lookup = {

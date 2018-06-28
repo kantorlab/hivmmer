@@ -5,10 +5,10 @@ from setuptools import setup
 
 setup(
     name="hivmmer",
-    version="0.1.0",
+    version="0.1.1",
     author="Mark Howison",
     author_email="mhowison@brown.edu",
-    url="https://github.com/mhowison/hivmmer",
+    url="https://github.com/kantorlab/hivmmer",
     description="""
         An alignment and variant-calling pipeline for Illumina deep sequencing of
         HIV-1, based on the probabilistic aligner HMMER.""",

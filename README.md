@@ -47,7 +47,7 @@ Optionally, you can use `N` threads to speed-up the HMMER stages of the pipeline
 ### Quick install with Anaconda Python
 
 On 64-bit Linux, it is also possible to install hivmmer using prebuilt
-packages from the [hivmmer Anaconda channel](https://anaconda.org/hivmmer).
+packages from the [kantorlab Anaconda channel](https://anaconda.org/kantorlab).
 
 First, install the [Anaconda](https://www.continuum.io/anaconda-overview)
 or Miniconda distribution of Python 3.
@@ -55,7 +55,7 @@ or Miniconda distribution of Python 3.
 Once the `conda` command is in your PATH, hivmmer and all its dependencies can
 be installed into its own isolated conda environment with the single command:
 
-    conda create -c hivmmer -n hivmmer hivmmer
+    conda create -c kantorlab -n hivmmer hivmmer
 
 Once installed, activate the `hivmmer` conda environment with:
 
@@ -66,9 +66,8 @@ This will place hivmmer and all its dependencies in your PATH.
 We have primarily tested hivmmer on CentOS 6.8, but in theory it should run on
 any 64-bit Linux system with glibc >= 2.12.
 
-For refernce, all of the relevant conda recipes are included in the `conda`
-directory of the repo.
-
+For refernce, all of the relevant conda recipes are available from the
+[Kantor Lab's conda-recipes repository](https://github.com/kantorlab/conda-recipes).
 
 ### Quick install with Docker
 
@@ -81,11 +80,11 @@ install Docker for your host operating system.
 Second, pull the pre-compiled hivmmer Docker image, which includes all dependencies,
 from DockerHub:
 
-    docker pull mhowison/hivmmer
+    docker pull kantorlab/hivmmer
 
 Each time you want to use Agalma, run the docker image with:
 
-    docker run -it mhowison/hivmmer
+    docker run -it kantorlab/hivmmer
 
 This will launch a new Docker container with hivmmer, and provide an
 interactive prompt to access to the container.
@@ -96,7 +95,7 @@ hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
 
 * FASTX-Toolkit 0.0.14
-* HMMER 3.1b2
+* HMMER 3.2.1
 * PEAR 0.9.11
 
 ## Authors
@@ -104,7 +103,7 @@ following dependencies on external tools (which must be in your PATH):
 Mark Howison <mhowison@brown.edu>
 
 For bug reports and questions, please create an
-[issue on Github](https://github.com/mhowison/hivmmer/issues)
+[issue on Github](https://github.com/kantorlab/hivmmer/issues)
 
 ## License
 
