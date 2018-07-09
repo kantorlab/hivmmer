@@ -88,8 +88,8 @@ def codon_table(reads, hmmer):
       i = 3*hsp.hit_start + offset
       j = 0
 
-      for aa, pp in zip(hsp.aln[1].seq, hsp.aln_annotation["PP"]):
-        if aa.islower():
+      for k, aa in enumerate(hsp.aln[1].seq):
+        if aa.islower() or (aa == "*" and hsp.aln[0].seq[k] == "."):
           codon = "ins"
         elif aa == "-":
           codon = "del"

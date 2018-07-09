@@ -10,9 +10,13 @@ def parse_args():
   parser.add_argument("FASTA",
                       nargs=1,
                       help="path to nucleotide FASTA file, or '-' to read from stdin")
+  parser.add_argument("--allow-stop-codons",
+                      action="store_true",
+                      default=False,
+                      help="allow stop codons [default: False]")
   return parser.parse_args()
 
-def translate(fasta):
+def translate(fasta, allow_stop_codons):
 
   nskipped = {"N": 0, "*": 0}
 
@@ -37,7 +41,7 @@ def translate(fasta):
 
     for i in range(3):
       aa = Seq.translate(seq[i:])
-      if aa.count("*") > 0:
+      if (not allow_stop_codons) and aa.count("*") > 0:
         nstop += 1
       else:
         print(">%s-%d'" % (record.id, i))
@@ -54,9 +58,9 @@ if __name__ == "__main__":
   args = parse_args()
   fasta = args.FASTA[0]
   if fasta == '-':
-    translate(sys.stdin)
+    translate(sys.stdin, args.allow_stop_codons)
   else:
     with open(fasta) as f:
-      translate(f)
+      translate(f, args.allow_stop_codons)
 
 # vim: expandtab sw=2 ts=2
