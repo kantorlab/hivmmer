@@ -8,7 +8,7 @@ HIV-1, based on the probabilistic aligner [HMMER](http://hmmer.org).
 1. Constructs an amino acid profile Hidden Markov Model (pHMM) from a multiple
    sequence alignment of all HIV-1 Group M amino acid sequences publicly
    available in the [Los Alamos HIV Sequence Database](http//www.hiv.lanl.gov) for
-   the *pol* gene.
+   the a given gene or region of the HIV genome.
 2. Preprocesses the NGS data using the paired-end read merging tool
    [PEAR](https://sco.h-its.org/exelixis/web/software/pear)
    and consolidates duplicate sequences using
@@ -97,6 +97,22 @@ following dependencies on external tools (which must be in your PATH):
 * FASTX-Toolkit 0.0.14
 * HMMER 3.2.1
 * PEAR 0.9.11
+
+### Preparing a pHMM reference
+
+hivmmer comes with prebuilt amino acid pHMM references for the *pol*, *int* and
+*env* regions based on curated multiple-sequence alignments downloaded from the
+[Los Alamos HIV Sequence Database](http//www.hiv.lanl.gov).
+
+A custome reference can be created using the included `hivmmer-trim-reference`
+utility and the `hmmbuild` program from HMMER. For example, the *pol* reference
+was created using the commands:
+
+    hivmmer-trim-reference HIV1_ALL_2016_2253-3870_DNA.fasta >HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.fasta
+    hmmbuild HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.hmm HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.fasta
+
+The resulting pHMM `HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.hmm` can then be
+passed to `hivmmer` as with the `--ref` option.
 
 ## Authors
 

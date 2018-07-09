@@ -12,7 +12,7 @@ usage: hivmmer --id ID --fq1 FASTQ1 --fq2 FASTQ2 --ref REFERENCE [--cpu N]
 "
 }
 
-OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu: -n 'parse-options' -- "$@"`
+OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu:,region: -n 'parse-options' -- "$@"`
 eval set -- "$OPTS"
 
 ID=
@@ -20,6 +20,7 @@ FQ1=
 FQ2=
 REF=
 CPU=1
+REGION=pol
 
 while true; do
   case "$1" in
@@ -30,16 +31,18 @@ while true; do
     --fq2) FQ2="$2"; shift 2 ;;
     --ref) REF="$2"; shift 2 ;;
     --cpu) CPU="$2"; shift 2 ;;
+    --region) REGION="$2"; shift 2 ;;
     --) shift; break ;;
     *) break ;;
   esac
 done
 
-echo "ID:  $ID"
-echo "FQ1: $FQ1"
-echo "FQ2: $FQ2"
-echo "REF: $REF"
-echo "CPU: $CPU"
+echo "ID:     $ID"
+echo "FQ1:    $FQ1"
+echo "FQ2:    $FQ2"
+echo "REF:    $REF"
+echo "CPU:    $CPU"
+echo "REGION: $REGION"
 
 if [ -z "$ID" ] || [ -z "$FQ1" ] || [ -z "$FQ2" ] || [ -z "$REF" ]
 then
@@ -75,8 +78,8 @@ hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
 
 echo "### STAGE 6: CODON TABLE ###"
 
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa --region $REGION &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa --region $REGION &
 wait
 
 echo "### FINISHED ###"
