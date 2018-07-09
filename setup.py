@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name="hivmmer",
-    version="0.1.1",
+    version="0.1.2",
     author="Mark Howison",
     author_email="mhowison@brown.edu",
     url="https://github.com/kantorlab/hivmmer",

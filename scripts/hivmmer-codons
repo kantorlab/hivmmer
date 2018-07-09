@@ -2,7 +2,6 @@
 import argparse
 import numpy as np
 import os
-import pandas as pd
 import sys
 
 from Bio import SearchIO
@@ -12,7 +11,7 @@ from Bio import SeqIO
 from datetime import datetime
 from itertools import chain, product
 
-version = "0.1.1"
+version = "0.1.2"
 min_score = 1.5
 nt = ("A", "C", "G", "T")
 aa_lookup = {
@@ -52,6 +51,10 @@ def parse_args():
   parser.add_argument("--ref",
                       required=True,
                       help="path to the reference NT sequence (e.g. hxb2)")
+  parser.add_argument("--region",
+                      choices=("pol", "int", "env"),
+                      default="pol",
+                      help="region of the HIV genome (for indexing)")
   return parser.parse_args()
 
 
@@ -85,8 +88,8 @@ def codon_table(reads, hmmer):
       i = 3*hsp.hit_start + offset
       j = 0
 
-      for aa, pp in zip(hsp.aln[1].seq, hsp.aln_annotation["PP"]):
-        if aa.islower():
+      for k, aa in enumerate(hsp.aln[1].seq):
+        if aa.islower() or (aa == "*" and hsp.aln[0].seq[k] == "."):
           codon = "ins"
         elif aa == "-":
           codon = "del"
@@ -102,7 +105,7 @@ def codon_table(reads, hmmer):
   return table
 
 
-def print_aavf(table, ref, out):
+def print_aavf(table, ref, out, region="pol"):
   """
   """
   refseq = next(SeqIO.parse(ref, "fasta"))
@@ -134,11 +137,15 @@ def print_aavf(table, ref, out):
   for i, row in enumerate(table):
     cov = row.sum()
     norm = 1.0 / cov
-    if i >= 99:
-      gene = "RT"
-      pos = i - 98
+    if region == "pol":
+      if i >= 99:
+        gene = "RT"
+        pos = i - 98
+      else:
+        gene = "PR"
+        pos = i + 1
     else:
-      gene = "PR"
+      gene = region[:2].upper()
       pos = i + 1
     for aa, codonlist in aa_lookup.items():
       ac = []
@@ -186,6 +193,6 @@ if __name__ == "__main__":
 
   # AAVF output
   with open(basename + ".aavf", "w") as f:
-    print_aavf(table, args.ref, f)
+    print_aavf(table, args.ref, f, args.region)
 
 # vim: expandtab sw=2 ts=2

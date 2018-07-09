@@ -1,18 +1,19 @@
 #!/bin/bash
 set -e
-VERSION="0.1.1"
+VERSION="0.1.2"
 
 ### ARGUMENTS ###
 
 function usage() {
   echo "\
 usage: hivmmer --id ID --fq1 FASTQ1 --fq2 FASTQ2 --ref REFERENCE [--cpu N]
+               [--region REGION] [--allow-stop-codons]
                [-h|--help] [-v|--version]
 
 "
 }
 
-OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu: -n 'parse-options' -- "$@"`
+OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu:,region:,allow-stop-codons -n 'parse-options' -- "$@"`
 eval set -- "$OPTS"
 
 ID=
@@ -20,6 +21,8 @@ FQ1=
 FQ2=
 REF=
 CPU=1
+REGION=pol
+STOPC=
 
 while true; do
   case "$1" in
@@ -30,16 +33,20 @@ while true; do
     --fq2) FQ2="$2"; shift 2 ;;
     --ref) REF="$2"; shift 2 ;;
     --cpu) CPU="$2"; shift 2 ;;
+    --region) REGION="$2"; shift 2 ;;
+    --allow-stop-codons) STOPC="--allow-stop-codons"; shift 1 ;;
     --) shift; break ;;
     *) break ;;
   esac
 done
 
-echo "ID:  $ID"
-echo "FQ1: $FQ1"
-echo "FQ2: $FQ2"
-echo "REF: $REF"
-echo "CPU: $CPU"
+echo "ID:     $ID"
+echo "FQ1:    $FQ1"
+echo "FQ2:    $FQ2"
+echo "REF:    $REF"
+echo "CPU:    $CPU"
+echo "REGION: $REGION"
+echo "STOPC:  $STOPC"
 
 if [ -z "$ID" ] || [ -z "$FQ1" ] || [ -z "$FQ2" ] || [ -z "$REF" ]
 then
@@ -59,7 +66,7 @@ cat ${ID}.pear.*.fastq | fastx_collapser -Q33 -o ${ID}.collapsed.fa
 
 echo "### STAGE 3: TRANSLATE ###"
 
-hivmmer-translate ${ID}.collapsed.fa >${ID}.collapsed.pfa
+hivmmer-translate $STOPC ${ID}.collapsed.fa >${ID}.collapsed.pfa
 
 echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
 
@@ -75,8 +82,8 @@ hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
 
 echo "### STAGE 6: CODON TABLE ###"
 
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa --region $REGION &
+hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa --region $REGION &
 wait
 
 echo "### FINISHED ###"
