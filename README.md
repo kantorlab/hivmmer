@@ -1,3 +1,5 @@
+![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.6-blue.svg)
+
 # hivmmer
 
 An alignment and variant-calling pipeline for Illumina deep sequencing of
@@ -44,6 +46,8 @@ Optionally, you can use `N` threads to speed-up the HMMER stages of the pipeline
 
 ## Installation
 
+**hivmmer requires Python 3.6**
+
 ### Quick install with Anaconda Python
 
 On 64-bit Linux, it is also possible to install hivmmer using prebuilt
@@ -89,7 +93,7 @@ Each time you want to use Agalma, run the docker image with:
 This will launch a new Docker container with hivmmer, and provide an
 interactive prompt to access to the container.
 
-### Manual insallation
+### Manual installation
 
 hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
