@@ -70,7 +70,7 @@ This will place hivmmer and all its dependencies in your PATH.
 We have primarily tested hivmmer on CentOS 6.8, but in theory it should run on
 any 64-bit Linux system with glibc >= 2.12.
 
-For refernce, all of the relevant conda recipes are available from the
+All relevant conda recipes are available from the
 [Kantor Lab's conda-recipes repository](https://github.com/kantorlab/conda-recipes).
 
 ### Quick install with Docker
@@ -101,6 +101,8 @@ following dependencies on external tools (which must be in your PATH):
 * FASTX-Toolkit 0.0.14
 * HMMER 3.2.1
 * PEAR 0.9.11
+
+Note: PEAR source code is available under an academic license from [https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis](https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis).
 
 ### Preparing a pHMM reference
 
