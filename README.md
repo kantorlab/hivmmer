@@ -1,3 +1,5 @@
+![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.6-blue.svg)
+
 # hivmmer
 
 An alignment and variant-calling pipeline for Illumina deep sequencing of
@@ -44,6 +46,8 @@ Optionally, you can use `N` threads to speed-up the HMMER stages of the pipeline
 
 ## Installation
 
+**hivmmer requires Python 3.6**
+
 ### Quick install with Anaconda Python
 
 On 64-bit Linux, it is also possible to install hivmmer using prebuilt
@@ -66,7 +70,7 @@ This will place hivmmer and all its dependencies in your PATH.
 We have primarily tested hivmmer on CentOS 6.8, but in theory it should run on
 any 64-bit Linux system with glibc >= 2.12.
 
-For refernce, all of the relevant conda recipes are available from the
+All relevant conda recipes are available from the
 [Kantor Lab's conda-recipes repository](https://github.com/kantorlab/conda-recipes).
 
 ### Quick install with Docker
@@ -89,7 +93,7 @@ Each time you want to use Agalma, run the docker image with:
 This will launch a new Docker container with hivmmer, and provide an
 interactive prompt to access to the container.
 
-### Manual insallation
+### Manual installation
 
 hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
@@ -97,6 +101,8 @@ following dependencies on external tools (which must be in your PATH):
 * FASTX-Toolkit 0.0.14
 * HMMER 3.2.1
 * PEAR 0.9.11
+
+Note: PEAR source code is available under an academic license from [https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis](https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis).
 
 ### Preparing a pHMM reference
 
