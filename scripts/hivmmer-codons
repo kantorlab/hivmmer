@@ -37,7 +37,8 @@ aa_lookup = {
   "Y": ("TAT", "TAC"),
   "*": ("TAA", "TGA", "TAG")
 }
-codons = list(chain(list(map("".join, product(list(map("".join, product(nt, nt))), nt))), ["del", "ins"]))
+codons = list(map("".join, product(nt, repeat=3)))
+codons = codons + list(map("ins_{}".format, codons)) + ["del"]
 codon_index = dict((codon, i) for (i, codon) in enumerate(codons))
 
 def parse_args():
@@ -90,14 +91,16 @@ def codon_table(reads, hmmer):
 
       for k, aa in enumerate(hsp.aln[1].seq):
         if aa.islower() or (aa == "*" and hsp.aln[0].seq[k] == "."):
-          codon = "ins"
+          codon = str(seq[i:i+3])
+          assert aa.upper() == Seq.translate(codon)
+          codon = "ins_{}".format(codon)
         elif aa == "-":
           codon = "del"
         else:
           codon = str(seq[i:i+3])
           assert aa == Seq.translate(codon)
         table[hsp.query_start+j, codon_index[codon]] += count
-        j += (codon != "ins")
+        j += (codon[:3] != "ins")
         i += 3*(codon != "del")
 
   print("hsps:", n_hsps, file=sys.stderr)
