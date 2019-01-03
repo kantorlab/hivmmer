@@ -118,12 +118,12 @@ def codon_table(reads, hmmer):
             assert aa.upper() == Seq.translate(codon[-1])
             i += 3 # increment the read
             ii += 1
-          codon = "".join(codon)
-          txt[hsp.query_start+j][codon] = txt[hsp.query_start+j].get(codon, 0) + count
           if len(codon) == 1:
             table[hsp.query_start+j, codon_index[codon[0]]] += count
           else:
             table[hsp.query_start+j, codon_index["ins"]] += count
+          codon = "".join(codon)
+          txt[hsp.query_start+j][codon] = txt[hsp.query_start+j].get(codon, 0) + count
           j += 1 # increment the reference
           k += ii + 1 # increment the alignment
 
