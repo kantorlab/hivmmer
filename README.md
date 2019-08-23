@@ -98,7 +98,6 @@ interactive prompt to access to the container.
 hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
 
-* FASTX-Toolkit 0.0.14
 * HMMER 3.2.1
 * PEAR 0.9.11
 
@@ -122,7 +121,7 @@ passed to `hivmmer` as with the `--ref` option.
 
 ## Authors
 
-Mark Howison <mhowison@brown.edu>
+Mark Howison <mhowison@ripl.org>
 
 For bug reports and questions, please create an
 [issue on Github](https://github.com/kantorlab/hivmmer/issues)
@@ -130,6 +129,8 @@ For bug reports and questions, please create an
 ## License
 
 Copyright 2018, Brown University, Providence, RI. All Rights Reserved.
+
+Copyright 2019, Innovative Policy Lab (d/b/a Research Improving People's Lives), Providence, RI. All Rights Reserved.
 
 See LICENSE for full terms of use.
 

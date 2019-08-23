@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-VERSION="0.1.2"
+VERSION="0.1.3"
 
 ### ARGUMENTS ###
 
@@ -60,9 +60,9 @@ echo "### STAGE 1: PEAR ###"
 
 pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
 
-echo "### STAGE 2: FASTX_COLLAPSER ###"
+echo "### STAGE 2: QC FILTERING AND DEDUPE ###"
 
-cat ${ID}.pear.*.fastq | fastx_collapser -Q33 -o ${ID}.collapsed.fa
+hivmmer-filter ${ID}.pear.*.fastq >${ID}.collapsed.fa
 
 echo "### STAGE 3: TRANSLATE ###"
 
