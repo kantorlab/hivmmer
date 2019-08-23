@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
     name="hivmmer",
-    version="0.1.2",
+    version="0.1.3",
     author="Mark Howison",
-    author_email="mhowison@brown.edu",
+    author_email="mhowison@ripl.org",
     url="https://github.com/kantorlab/hivmmer",
     description="""
         An alignment and variant-calling pipeline for Illumina deep sequencing of
