@@ -9,9 +9,9 @@ from Bio import Seq
 from Bio import SeqIO
 
 from datetime import datetime
-from itertools import chain, product
+from itertools import product
 
-version = "0.1.2"
+version = "0.1.3"
 min_score = 1.5
 nt = ("A", "C", "G", "T")
 aa_lookup = {
@@ -37,7 +37,7 @@ aa_lookup = {
   "Y": ("TAT", "TAC"),
   "*": ("TAA", "TGA", "TAG")
 }
-codons = list(chain(list(map("".join, product(list(map("".join, product(nt, nt))), nt))), ["del", "ins"]))
+codons = list(map("".join, product(nt, repeat=3))) + ["ins", "del"]
 codon_index = dict((codon, i) for (i, codon) in enumerate(codons))
 
 def parse_args():
@@ -63,6 +63,7 @@ def codon_table(reads, hmmer):
   nref = max(f.query_end for f in hmmer.fragments)
 
   table = np.zeros((nref, len(codons)), dtype=np.uint32)
+  txt = [{} for _ in range(nref)]
 
   n_hsps = {}
 
@@ -85,24 +86,50 @@ def codon_table(reads, hmmer):
 
       if (hsp.bitscore / hsp.hit_span) < min_score: continue
 
-      i = 3*hsp.hit_start + offset
-      j = 0
+      i = 3*hsp.hit_start + offset # tracks position in the read sequence
+      j = 0                        # tracks position in the reference sequence
+      k = 0                        # tracks position in the hmmer alignment
 
-      for k, aa in enumerate(hsp.aln[1].seq):
-        if aa.islower() or (aa == "*" and hsp.aln[0].seq[k] == "."):
-          codon = "ins"
-        elif aa == "-":
-          codon = "del"
+      n = len(hsp.aln[0].seq)
+      assert n == len(hsp.aln[1].seq)
+
+      # alignment should not start with an insertion
+      assert hsp.aln[0].seq[0] != "."
+
+      while k < n:
+        aa = hsp.aln[1].seq[k]
+        if aa == "-":
+          # deletion
+          table[hsp.query_start+j, codon_index["del"]] += count
+          txt[hsp.query_start+j][""] = txt[hsp.query_start+j].get("", 0) + count
+          j += 1 # increment the reference, but not the read
+          k += 1 # increment the alignment
         else:
-          codon = str(seq[i:i+3])
-          assert aa == Seq.translate(codon)
-        table[hsp.query_start+j, codon_index[codon]] += count
-        j += (codon != "ins")
-        i += 3*(codon != "del")
+          # substitution
+          codon = [str(seq[i:i+3])]
+          assert aa == Seq.translate(codon[0])
+          i += 3 # increment the read
+          ii = 0 # tracks the position in an insertion
+          while (k+ii+1) < n and hsp.aln[0].seq[k+ii+1] == ".":
+            # insertion
+            aa = hsp.aln[1].seq[k+ii+1]
+            assert aa.islower() or aa == "*"
+            codon.append(str(seq[i:i+3]))
+            assert aa.upper() == Seq.translate(codon[-1])
+            i += 3 # increment the read
+            ii += 1
+          if len(codon) == 1:
+            table[hsp.query_start+j, codon_index[codon[0]]] += count
+          else:
+            table[hsp.query_start+j, codon_index["ins"]] += count
+          codon = "".join(codon)
+          txt[hsp.query_start+j][codon] = txt[hsp.query_start+j].get(codon, 0) + count
+          j += 1 # increment the reference
+          k += ii + 1 # increment the alignment
 
   print("hsps:", n_hsps, file=sys.stderr)
 
-  return table
+  return table, txt
 
 
 def print_aavf(table, ref, out, region="pol"):
@@ -182,7 +209,7 @@ if __name__ == "__main__":
   hmmer = SearchIO.read(args.hmmer, "hmmer3-text")
   print("parsed hmmer", file=sys.stderr)
 
-  table = codon_table(reads, hmmer)
+  table, txt = codon_table(reads, hmmer)
   print("constructed codon table", file=sys.stderr)
 
   basename = os.path.splitext(args.hmmer)[0]
@@ -190,6 +217,13 @@ if __name__ == "__main__":
   # CSV output
   np.savetxt(basename + ".codons.csv", table, fmt="%g", comments="",
              delimiter=",", header=",".join(codons))
+
+  # TXT output
+  with open(basename + ".codons.txt", "w") as f:
+    print("pos", "codon", "freq", sep="\t", file=f)
+    for i, freq in enumerate(txt):
+      for codon in sorted(freq, key=freq.get, reverse=True):
+        print(i, codon, freq[codon], sep="\t", file=f)
 
   # AAVF output
   with open(basename + ".aavf", "w") as f:

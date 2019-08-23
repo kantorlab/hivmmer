@@ -1,4 +1,4 @@
-![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.6-blue.svg)
+![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.7-blue.svg)
 
 # hivmmer
 
@@ -11,15 +11,13 @@ HIV-1, based on the probabilistic aligner [HMMER](http://hmmer.org).
    sequence alignment of all HIV-1 Group M amino acid sequences publicly
    available in the [Los Alamos HIV Sequence Database](http//www.hiv.lanl.gov) for
    the a given gene or region of the HIV genome.
-2. Preprocesses the NGS data using the paired-end read merging tool
-   [PEAR](https://sco.h-its.org/exelixis/web/software/pear)
-   and consolidates duplicate sequences using
-   [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx\_toolkit/). The number of
-   duplicates are tracked to enable correct inference of frequencies later in the
-   pipeline.
+2. Filters the NGS data, retaining reads with length >75 and mean PHRED quality
+   score > 25, and consolidates duplicate sequences (with `hivmmer-filter`).
+   The number of duplicates are tracked to enable correct inference of frequencies
+   later in the pipeline.
 3. Translates each de-duplicated sequence into all six possible frames (forward
    and reverse), retaining only the translated sequences that contain no stop
-   codons.
+   codons (with `hivmmer-translate`).
 4. Aligns the translated reads to the reference pHMM with hmmsearch, producing
    a multiple sequence alignment of translated reads.
 5. Constructs a sample-specific amino acid pHMM from the multiple sequence
@@ -28,7 +26,7 @@ HIV-1, based on the probabilistic aligner [HMMER](http://hmmer.org).
    sensitivity.
 7. Maps the translated amino acid coordinates in the alignment to the original
    frame and coordinates in the nucleotide reads to construct a codon frequency
-   table (adjusting the counts for duplicate reads).
+   table (adjusting the counts for duplicate reads; with `hivmmer-codons`).
 
 ## Usage
 
@@ -46,7 +44,7 @@ Optionally, you can use `N` threads to speed-up the HMMER stages of the pipeline
 
 ## Installation
 
-**hivmmer requires Python 3.6**
+**hivmmer requires Python 3.7**
 
 ### Quick install with Anaconda Python
 
@@ -98,7 +96,6 @@ interactive prompt to access to the container.
 hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
 
-* FASTX-Toolkit 0.0.14
 * HMMER 3.2.1
 * PEAR 0.9.11
 
@@ -122,7 +119,7 @@ passed to `hivmmer` as with the `--ref` option.
 
 ## Authors
 
-Mark Howison <mhowison@brown.edu>
+Mark Howison <mhowison@ripl.org>
 
 For bug reports and questions, please create an
 [issue on Github](https://github.com/kantorlab/hivmmer/issues)
@@ -130,6 +127,8 @@ For bug reports and questions, please create an
 ## License
 
 Copyright 2018, Brown University, Providence, RI. All Rights Reserved.
+
+Copyright 2019, Innovative Policy Lab (d/b/a Research Improving People's Lives), Providence, RI. All Rights Reserved.
 
 See LICENSE for full terms of use.
 
