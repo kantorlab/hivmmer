@@ -1,4 +1,4 @@
-![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.6-blue.svg)
+![conda](https://img.shields.io/conda/v/kantorlab/hivmmer.svg) ![python](https://img.shields.io/badge/python-3.7-blue.svg)
 
 # hivmmer
 
@@ -44,7 +44,7 @@ Optionally, you can use `N` threads to speed-up the HMMER stages of the pipeline
 
 ## Installation
 
-**hivmmer requires Python 3.6**
+**hivmmer requires Python 3.7**
 
 ### Quick install with Anaconda Python
 

@@ -1,0 +1,6 @@
+[0.1.3]
+* Added an output file listing the frequency of specific insertion codons at
+  each site (issue-1).
+* Replaced the fastx_collapser stage with a new QC filtering stage that
+  implements a read length filter (>75) and mean PHRED score filter (>25), and
+  performs deduplication like fastx_collapser (issue-6).
