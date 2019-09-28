@@ -3,7 +3,7 @@ import sys
 from Bio import AlignIO, SeqIO, Seq
 from io import StringIO
 
-aafile, start, end, gapped = sys.argv[1:]
+aafile, start, end = sys.argv[1:]
 
 # fix short sequences
 records = list(SeqIO.parse(aafile, "fasta"))
@@ -39,17 +39,10 @@ coords = [i for i, aa in enumerate(hxb2.seq) if aa != "-" and aa != "#"]
 # trim to start/end coordinates
 coords = coords[start:end]
 
-if gapped == "gapped":
-  for a in align:
-    aa = str(a.seq[coords[0]:coords[-1]]).replace("#", "-")
-    if not "*" in aa:
-      print(">%s" % a.description)
-      print(aa)
-else:
-  for a in align:
-    aa = "".join(a.seq[i] for i in coords).replace("#", "-")
-    if not "*" in aa:
-      print(">%s" % a.description)
-      print(aa)
+for a in align:
+  aa = str(a.seq[coords[0]:coords[-1]]).replace("#", "-")
+  if not "*" in aa:
+    print(">%s" % a.description)
+    print(aa)
 
 # vim: expandtab sw=2 ts=2

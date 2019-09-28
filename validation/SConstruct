@@ -8,68 +8,73 @@ genes = dict((row.gene, row.aa_trim_length) for i, row in wgs.iterrows())
 # Reference data
 for gene, end in genes.items():
     env.Command("scratch/reference/{}.fa".format(gene),
-                ["lib/trim-reference.py", "data/HIV1_FLT_2017_{}_PRO.fasta".format(gene),
-                 Value(1), Value(end)],
+                ["lib/trim-reference.py",
+                 "../data/HIV1_FLT_2017_{}_PRO.fasta".format(gene),
+                 Value(1),
+                 Value(end)],
                 "python $SOURCES > $TARGET")
     env.Command("scratch/reference/{}.hmm".format(gene),
                 "scratch/reference/{}.fa".format(gene),
                 "hmmbuild $TARGET $SOURCE")
 
 # Download 5VM
-accessions = {"5VM": "SRR961514"}
-for dataset, accession in accessions.items():
+for dataset in ["SRR961514"]:
     env.Command(["scratch/{}_1.fastq".format(dataset),
                  "scratch/{}_2.fastq".format(dataset)],
-                Value(accession),
+                Value(dataset),
                 " && ".join([
                      "cd scratch",
                      "prefetch $SOURCE",
                      "fastq-dump --defline-qual '+' --split-files --defline-seq '@$$sn[_$$rn]/$$ri' $SOURCE"]))
+    for i in [1, 2]:
+        env.Command("scratch/5VM_{}.fastq".format(i),
+                    "scratch/{}_{}.fastq".format(dataset, i),
+                    "head -n 40000 $SOURCE > $TARGET")
 
 # Download UniVec
 env.Command("scratch/UniVec.collapsed.fa",
             Value("ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec"),
             "wget -O $TARGET $SOURCE")
 
-# hivmmer Stages 1-2: PEAR and fastx-collapser
+# hivmmer Stage 1: PEAR
 for dataset in ["5VM"]:
     env.Command(["scratch/pear/{}/pear.assembled.fastq".format(dataset),
                  "scratch/pear/{}/pear.unassembled.forward.fastq".format(dataset),
                  "scratch/pear/{}/pear.unassembled.reverse.fastq".format(dataset),
-                 "scratch/pear/{}/pear.discarded.fastq".format(dataset),
-                 "scratch/{}.collapsed.fa".format(dataset)],
-                ["lib/pear.sh",
-                 "scratch/{}_1.fastq".format(dataset),
+                 "scratch/pear/{}/pear.discarded.fastq".format(dataset)],
+                ["scratch/{}_1.fastq".format(dataset),
                  "scratch/{}_2.fastq".format(dataset)],
-                "bash $SOURCES scratch/pear/{}".format(dataset))
+                "pear -y 1G -f ${{SOURCES[0]}} -r ${{SOURCES[1]}} -o scratch/pear/{}/pear -k".format(dataset))
+
+# hivmmer Stage 2: filter
+for dataset in ["5VM"]:
+    env.Command("scratch/{}.collapsed.fa".format(dataset),
+                ["scratch/pear/{}/pear.assembled.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.forward.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.reverse.fastq".format(dataset)],
+                "hivmmer-filter $SOURCES > $TARGET")
 
 # randomized dataset
-env.Command("scratch/5VMrand.collapsed.fa",
+env.Command("scratch/random.collapsed.fa",
             ["lib/randomize-data.py",
              "scratch/5VM.collapsed.fa"],
             "python $SOURCES > $TARGET")
 
-datasets = ["5VM", "UniVec", "5VMrand"]
+datasets = ["5VM", "UniVec", "random"]
 
 # hivmmer Stage 3: Translate
 for dataset in datasets:
     env.Command("scratch/{}.collapsed.pfa".format(dataset),
-                ["lib/translate.py",
-                 "scratch/{}.collapsed.fa".format(dataset)],
-                "python $SOURCES > $TARGET")
+                "scratch/{}.collapsed.fa".format(dataset),
+                "hivmmer-translate --allow-stop-codons $SOURCES > $TARGET")
 
 # hivmmer Stage 4: hmmsearch
 for dataset in datasets:
     for gene in genes:
-        env.Command(["scratch/hmmsearch1/{}/{}.sto".format(dataset, gene),
-                     "scratch/hmmsearch1/{}/{}.txt".format(dataset, gene),
-                     "scratch/hmmsearch1/{}/{}.hmm".format(dataset, gene),
-                     "scratch/hmmsearch1/{}/{}.ref.consensus.fa".format(dataset, gene)],
-                    ["lib/hmmsearch.sh",
-                     Value(dataset),
-                     Value(gene),
-                     "scratch/reference/{}.hmm".format(gene),
-                     "scratch/pear/{}/collapsed.pfa".format(dataset)],
-                     "bash $SOURCES $CPUS")
+        env.Command(["scratch/hmmsearch/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+                    ["scratch/reference/{}.hmm".format(gene),
+                     "scratch/{}.collapsed.pfa".format(dataset)],
+                     "hmmsearch -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
 
 # vim: syntax=python expandtab sw=4 ts=4
