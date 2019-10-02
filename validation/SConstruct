@@ -13,9 +13,13 @@ for gene, end in genes.items():
                  Value(1),
                  Value(end)],
                 "python $SOURCES > $TARGET")
-    env.Command("scratch/reference/{}.hmm".format(gene),
+    env.Command(["scratch/reference/{}.hmm".format(gene),
+                 "scratch/reference/{}.hmm.h3m".format(gene),
+                 "scratch/reference/{}.hmm.h3i".format(gene),
+                 "scratch/reference/{}.hmm.h3f".format(gene),
+                 "scratch/reference/{}.hmm.h3p".format(gene)],
                 "scratch/reference/{}.fa".format(gene),
-                "hmmbuild $TARGET $SOURCE")
+                "hmmbuild $TARGET $SOURCE && hmmpress $TARGET")
 
 # Download 5VM
 for dataset in ["SRR961514"]:
@@ -68,17 +72,17 @@ for dataset in datasets:
                 "scratch/{}.collapsed.fa".format(dataset),
                 "hivmmer-translate --allow-stop-codons $SOURCES > $TARGET")
 
-# hivmmer Stage 4: hmmsearch
+# hivmmer Stage 4: hmmscan
 for dataset in datasets:
     for gene in genes:
-        env.Command(["scratch/hmmsearch/{}/{}.txt".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+        env.Command(["scratch/hmmscan/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
                     ["scratch/reference/{}.hmm".format(gene),
                      "scratch/{}.collapsed.pfa".format(dataset)],
-                     "hmmsearch -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
-        env.Command("scratch/hmmsearch/{}/{}.csv".format(dataset, gene),
-                    ["lib/hmmsearch-csv.sh",
-                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+                     "hmmscan -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmscan/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmscan-csv.sh",
+                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
                     "bash $SOURCES > $TARGET")
 
 # vim: syntax=python expandtab sw=4 ts=4

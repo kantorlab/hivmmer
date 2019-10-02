@@ -2,8 +2,8 @@
 
 ## Setup
 
-The required python packages can be installed with Anaconda Pythong using:
+The required python packages can be installed with Anaconda Python using:
 
-    conda create -n hivmmer-validation -c kantorlab hivmmer=0.1.3 sra-tools=2.9.1.1 scons=3.0.1.1
+    conda create -n hivmmer-validation -c kantorlab hivmmer=0.1.3 sra-tools=2.9.1.1 scons=3.1.1
     conda activate hivmmer-validation
 
