@@ -85,4 +85,9 @@ for dataset in datasets:
                      "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
                     "bash $SOURCES > $TARGET")
 
+# Merge csv
+env.Command("scratch/evalue.csv",
+            ["lib/merge-csv.py"] + ["scratch/hmmscan/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
+            "python $SOURCES > $TARGET")
+
 # vim: syntax=python expandtab sw=4 ts=4
