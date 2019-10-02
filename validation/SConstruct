@@ -76,5 +76,9 @@ for dataset in datasets:
                     ["scratch/reference/{}.hmm".format(gene),
                      "scratch/{}.collapsed.pfa".format(dataset)],
                      "hmmsearch -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmsearch/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmsearch-csv.sh",
+                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+                    "bash $SOURCES > $TARGET")
 
 # vim: syntax=python expandtab sw=4 ts=4
