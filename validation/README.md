@@ -4,6 +4,6 @@
 
 The required python packages can be installed with Anaconda Python using:
 
-    conda create -n hivmmer-validation -c kantorlab hivmmer=0.1.3 sra-tools=2.9.1.1 scons=3.1.1
+    conda create -n hivmmer-validation -c kantorlab hivmmer=0.1.3 sra-tools=2.9.1.1 scons=3.1.1 r-ggplot2 r-tidyverse
     conda activate hivmmer-validation
 

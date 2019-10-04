@@ -1,7 +1,7 @@
 import csv
 import sys
 
-print("dataset", "gene", "evalue", sep=",")
+print("Dataset", "Gene", "Evalue", sep=",")
 
 for csv_file in sys.argv[1:]:
     dataset = csv_file.split("/")[-2]
