@@ -9,13 +9,12 @@ out_file <- args[2]
 
 csv <- read_csv(csv_file)
 csv$Evalue <- log(csv$Evalue)
-print(min(csv$Evalue))
-print(max(csv$Evalue))
 
 thresholds <- csv %>%
               filter(Dataset != "5VM") %>%
               group_by(Gene, Dataset) %>%
               summarise(Evalue=quantile(Evalue, 0.05))
+print(thresholds %>% group_by(Gene) %>% summarise(Evalue=min(exp(Evalue))))
 
 pdf(out_file, width=6, height=10)
 ggplot(csv, aes(x=Evalue, color=Dataset)) +
