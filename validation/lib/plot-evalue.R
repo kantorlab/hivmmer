@@ -7,13 +7,14 @@ args <- commandArgs(trailingOnly=TRUE)
 csv_file <- args[1]
 out_file <- args[2]
 
-csv <- read_csv(csv_file)
-csv$Evalue <- log(csv$Evalue)
+csv <- read_csv(csv_file, col_types="ccdc") %>%
+       mutate(Evalue=pmax(-20, log(Evalue)),
+	      Within=(Gene == Read))
 
 thresholds <- csv %>%
-              filter(Dataset != "5VM") %>%
+              filter(Dataset == "UniVec" | Dataset == "random" | (Dataset == "perfect" & Within == FALSE)) %>%
               group_by(Gene, Dataset) %>%
-              summarise(Evalue=quantile(Evalue, 0.05))
+              summarise(Evalue=quantile(Evalue, 0.001))
 print(thresholds %>% group_by(Gene) %>% summarise(Evalue=min(exp(Evalue))))
 
 pdf(out_file, width=6, height=10)

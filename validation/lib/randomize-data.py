@@ -1,6 +1,8 @@
 import sys
 from Bio import SeqIO
-from numpy.random import choice
+from numpy.random import choice, seed
+
+seed(87197155)
 
 nts = ["A", "C", "G", "T"]
 

@@ -104,17 +104,21 @@ env.Command("scratch/evalue.pdf",
             ["lib/plot-evalue.R",
              "scratch/evalue.csv"],
             "Rscript $SOURCES $TARGET")
+env.Command("scratch/evalue-perfect.pdf",
+            ["lib/plot-evalue-perfect.R",
+             "scratch/evalue.csv"],
+            "Rscript $SOURCES $TARGET")
 
-# Thresholds determined by evalue plot
+# Thresholds determined by evalue-perfect plot
 thresholds = {
-    "env": 0.075,
-    "gag": 0.0740,
-    "nef": 0.095,
-    "pol": 0.1,
-    "tat": 0.0240,
-    "vif": 0.0660,
-    "vpr": 0.0640,
-    "vpu": 0.0410
+    "env": 0.00148,
+    "gag": 0.0018,
+    "nef": 0.00065,
+    "pol": 0.000464,
+    "tat": 0.000245,
+    "vif": 0.000543,
+    "vpr": 0.000935,
+    "vpu": 0.0011
 }
 
 # Rerun hmmscan with thresholds
