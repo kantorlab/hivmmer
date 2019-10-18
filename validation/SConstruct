@@ -100,12 +100,12 @@ env.Command("scratch/evalue.csv",
             "python $SOURCES > $TARGET")
 
 # Plot evalues
-env.Command("scratch/evalue.png",
+env.Command("evalue.png",
             ["lib/plot-evalue.R",
              "scratch/evalue.csv",
              Value("LANL reference")],
             "Rscript $SOURCES $TARGET")
-env.Command("scratch/evalue-reference.png",
+env.Command("evalue-reference.png",
             ["lib/plot-evalue-reference.R",
              "scratch/evalue.csv"],
             "Rscript $SOURCES $TARGET")
@@ -162,7 +162,7 @@ env.Command("scratch/evalue2.csv",
             "python $SOURCES > $TARGET")
 
 # Plot re-aligned evalues
-env.Command("scratch/evalue2.png",
+env.Command("evalue-5VM.png",
             ["lib/plot-evalue.R",
              "scratch/evalue2.csv",
              Value("5VM")],
