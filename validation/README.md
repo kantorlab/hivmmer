@@ -45,32 +45,32 @@ as the reference database.
 
 ## Data sets
 
-*5VM*: the [5 Virus Mixture](), an NGS data set of 5 HIV plasmid sequences mixed in
-equal proportions.
+**5VM**: the [5 Virus Mixture](), an NGS data set of 5 near full length HIV plasmid sequences
+mixed in equal proportions.
 
-*UniVec*: a curated data set from NCBI that contains representative sequences of
+**UniVec**: a curated data set from NCBI that contains representative sequences of
 common laboratory contaminants.
 
-*random*: a synthetic data set with the same structure (number and length of sequences)
+**random**: a synthetic data set with the same structure (number and length of sequences)
 as 5VM, but in which the individual nucleotides in the sequences have been randomly sampled.
 
-*reference*: a synthetic data set with the same structure (number and length of sequences)
+**reference**: a synthetic data set with the same structure (number and length of sequences)
 as 5VM, but in which the sequences have been randomly sampled from the LANL reference
 sequences.
 
 Within each HIV gene alignment, we can define two additional data sets:
 
-*matching reference*: the subset of sequences from *reference* that were
+**matching reference**: the subset of sequences from *reference* that were
 derived from that same gene.
 
-*mis-matching reference*: the subset of sequences from *reference* that were
+**mis-matching reference**: the subset of sequences from *reference* that were
 derived from a different gene.
 
 Our assumptions are that:
-1. The distribution of E-values for *matching reference* represents correct
+1. The distribution of E-values for **matching reference** represents correct
    alignments.
-2. The distributions of E-values for *mis-matching references*, *random*, and
-   *UniVec* represent incorrect alignments.
+2. The distributions of E-values for **mis-matching references**, **random**, and
+   **UniVec** represent incorrect alignments.
 3. The distirbution of E-values for *5VM* will be a mixture of the "correct"
    and "incorrect" distributions, which we can separate using an appropriate
    threshold.
@@ -78,9 +78,9 @@ Our assumptions are that:
 ## Matching vs. mis-matching reference sequences
 
 As an initial test of this approach, we first compare the "correct" and "incorrect"
-distributions for each gene within the *reference* data set:
+distributions for each gene within the **reference** data set:
 
-!(evalue-reference.png)
+![Figure 1](evalue-reference.png)
 
 For several of the genes (gag, nef, pol, vif), the distributions are completely
 disjoint, and can be separated by an appropriate E-value threshold. For the
@@ -93,10 +93,10 @@ incorrect distribution.
 Next, we plot the cumulative density functions for each of the data sets in
 each of the genes:
 
-!(evalue.png)
+![Figure 2](evalue.png)
 
-As expected, the *matching reference* sequences quickly accumulate at very low
-E-values. Likewise, a portion of the *5VM* sequences also accumulate,
+As expected, the **matching reference** sequences quickly accumulate at very low
+E-values. Likewise, a portion of the **5VM** sequences also accumulate,
 representing the sequences that came from that gene. In contrast, the smallest
 E-values for each of the "incorrect" distributions (e.g. the vertical bars)
 occur at a relatively high E-value.  Using that value as a threshold would
@@ -111,16 +111,16 @@ For each gene, we use the minimum of the lowest observed E-value across the
 "incorrect" distributions (mis-matched reference, random and UniVec) as the
 final threshold for implementation in hivmmer:
 
-| region | E-value threshold |
-| ------ | ----------------- |
-| env    | 0.00148 |
-| gag    | 0.00180 |
-| nef    | 0.00065 |
-| pol    | 0.000464 |
-| tat    | 0.000245 |
-| vif    | 0.000543 |
-| vpr    | 0.000935 |
-| vpu    | 0.00110 |
+| gene | E-value threshold |
+| ---- | ----------------- |
+| env  | 0.00148 |
+| gag  | 0.00180 |
+| nef  | 0.00065 |
+| pol  | 0.000464 |
+| tat  | 0.000245 |
+| vif  | 0.000543 |
+| vpr  | 0.000935 |
+| vpu  | 0.00110 |
 
 ## Future Work: Two-Stage Alignment
 
@@ -129,7 +129,7 @@ reference database for each gene using the sequences that are below these
 thresholds in the first round of alignment. Here, we plot the resulting
 E-values of this approach for the 5VM data set:
 
-!(evalue-5VM.png)
+![Figure 3](evalue-5VM.png)
 
 Again, the thresholding approach separates the correct matching reference
 sequence from the incorrect sequences, with close to 100% of the correct gag,
