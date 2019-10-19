@@ -54,18 +54,18 @@ of 5 near full length HIV plasmid sequences mixed in equal proportions.
 from NCBI that contains representative sequences of common laboratory contaminants.
 
 **random**: a synthetic data set with the same structure (number and length of sequences)
-as 5VM, but in which the individual nucleotides in the sequences have been randomly sampled.
+as **5VM**, but in which the individual nucleotides in the sequences have been randomly sampled.
 
 **reference**: a synthetic data set with the same structure (number and length of sequences)
-as 5VM, but in which the sequences have been randomly sampled from the LANL reference
+as **5VM**, but in which the sequences have been randomly sampled from the LANL reference
 sequences.
 
 Within each HIV gene alignment, we can define two additional data sets:
 
-**matching reference**: the subset of sequences from *reference* that were
+**matching reference**: the subset of sequences from **reference** that were
 derived from that same gene.
 
-**mis-matching reference**: the subset of sequences from *reference* that were
+**mis-matching reference**: the subset of sequences from **reference** that were
 derived from a different gene.
 
 Our assumptions are that:
@@ -73,7 +73,7 @@ Our assumptions are that:
    alignments.
 2. The distributions of E-values for **mis-matching references**, **random**, and
    **UniVec** represent incorrect alignments.
-3. The distirbution of E-values for *5VM* will be a mixture of the "correct"
+3. The distirbution of E-values for **5VM** will be a mixture of the "correct"
    and "incorrect" distributions, which we can separate using an appropriate
    threshold.
 
