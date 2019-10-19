@@ -1,9 +1,12 @@
 from setuptools import setup, find_packages
 from glob import glob
 
+with open("hivmmer/VERSION") as f:
+    version = f.read().strip()
+
 setup(
     name="hivmmer",
-    version="0.2.0",
+    version=version,
     author="Mark Howison",
     author_email="mhowison@ripl.org",
     url="https://github.com/kantorlab/hivmmer",
