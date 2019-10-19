@@ -45,8 +45,8 @@ as the reference database.
 
 ## Data sets
 
-**5VM**: the [5 Virus Mixture](), an NGS data set of 5 near full length HIV plasmid sequences
-mixed in equal proportions.
+**5VM**: the [5 Virus Mix](https://github.com/cbg-ethz/5-virus-mix), an NGS data set
+of 5 near full length HIV plasmid sequences mixed in equal proportions.
 
 **UniVec**: a curated data set from NCBI that contains representative sequences of
 common laboratory contaminants.
