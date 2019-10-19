@@ -1,4 +1,5 @@
 hivmmer.egg-info
+dist/
 test/5VM.*
 test/pol.hmm.consensus.fa
 validation/scratch
