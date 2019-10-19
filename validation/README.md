@@ -1,6 +1,6 @@
 # Validation for alignment score thresholding
 
-## Setup
+## Reproducibility
 
 The required python packages can be installed with Anaconda Python using:
 
@@ -10,6 +10,8 @@ The required python packages can be installed with Anaconda Python using:
 Next, replace hivmmer 0.1.3 with the current version on this branch, with:
 
     pip install -e ..
+
+Run the threshold analyses with `scons`.
 
 ## Motivation
 
