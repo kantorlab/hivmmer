@@ -62,7 +62,7 @@ pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
 
 echo "### STAGE 2: QC FILTERING AND DEDUPE ###"
 
-hivmmer-filter ${ID}.pear.*.fastq >${ID}.collapsed.fa
+hivmmer-filter ${ID}.pear.assembled.fastq ${ID}.pear.unassembled.forward.fastq ${ID}.pear.unassembled.reverse.fastq >${ID}.collapsed.fa
 
 echo "### STAGE 3: TRANSLATE ###"
 

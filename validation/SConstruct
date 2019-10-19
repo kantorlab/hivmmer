@@ -1,0 +1,171 @@
+import pandas as pd
+import os
+
+env = Environment(ENV=os.environ, CPUS=1)
+wgs = pd.read_csv("data/wgs-hxb2-coordinates.csv")
+genes = dict((row.gene, row.aa_trim_length) for i, row in wgs.iterrows())
+
+# Reference data
+for gene, end in genes.items():
+    env.Command("scratch/reference/{}.fa".format(gene),
+                ["lib/trim-reference.py",
+                 "data/HIV1_FLT_2017_{}_PRO.fasta".format(gene),
+                 Value(1),
+                 Value(end)],
+                "python $SOURCES > $TARGET")
+    env.Command(["scratch/reference/{}.hmm".format(gene),
+                 "scratch/reference/{}.hmm.h3m".format(gene),
+                 "scratch/reference/{}.hmm.h3i".format(gene),
+                 "scratch/reference/{}.hmm.h3f".format(gene),
+                 "scratch/reference/{}.hmm.h3p".format(gene)],
+                "scratch/reference/{}.fa".format(gene),
+                "hmmbuild $TARGET $SOURCE && hmmpress $TARGET")
+
+# Download 5VM
+for dataset in ["SRR961514"]:
+    env.Command(["scratch/{}_1.fastq".format(dataset),
+                 "scratch/{}_2.fastq".format(dataset)],
+                Value(dataset),
+                " && ".join([
+                     "cd scratch",
+                     "prefetch $SOURCE",
+                     "fastq-dump --defline-qual '+' --split-files --defline-seq '@$$sn[_$$rn]/$$ri' $SOURCE"]))
+    for i in [1, 2]:
+        env.Command("scratch/5VM_{}.fastq".format(i),
+                    "scratch/{}_{}.fastq".format(dataset, i),
+                    "head -n 40000 $SOURCE > $TARGET")
+
+# Download UniVec
+env.Command("scratch/UniVec.collapsed.fa",
+            Value("ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec"),
+            "wget -O $TARGET $SOURCE")
+
+# hivmmer Stage 1: PEAR
+for dataset in ["5VM"]:
+    env.Command(["scratch/pear/{}/pear.assembled.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.forward.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.reverse.fastq".format(dataset),
+                 "scratch/pear/{}/pear.discarded.fastq".format(dataset)],
+                ["scratch/{}_1.fastq".format(dataset),
+                 "scratch/{}_2.fastq".format(dataset)],
+                "pear -y 1G -f ${{SOURCES[0]}} -r ${{SOURCES[1]}} -o scratch/pear/{}/pear -k".format(dataset))
+
+# hivmmer Stage 2: filter
+for dataset in ["5VM"]:
+    env.Command("scratch/{}.collapsed.fa".format(dataset),
+                ["scratch/pear/{}/pear.assembled.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.forward.fastq".format(dataset),
+                 "scratch/pear/{}/pear.unassembled.reverse.fastq".format(dataset)],
+                "hivmmer-filter $SOURCES > $TARGET")
+
+# randomized dataset
+env.Command("scratch/random.collapsed.fa",
+            ["lib/randomize-data.py",
+             "scratch/5VM.collapsed.fa"],
+            "python $SOURCES > $TARGET")
+
+# reference dataset
+env.Command("scratch/reference.collapsed.pfa",
+            ["lib/reference-data.py",
+             "scratch/5VM.collapsed.fa"] + \
+            ["scratch/reference/{}.fa".format(gene) for gene in genes],
+            "python $SOURCES > $TARGET")
+
+datasets = ["5VM", "UniVec", "random"]
+
+# hivmmer Stage 3: Translate
+for dataset in datasets:
+    env.Command("scratch/{}.collapsed.pfa".format(dataset),
+                "scratch/{}.collapsed.fa".format(dataset),
+                "hivmmer-translate --allow-stop-codons=1 $SOURCES > $TARGET")
+
+datasets += ["reference"]
+
+# hivmmer Stage 4: hmmscan
+for dataset in datasets:
+    for gene in genes:
+        env.Command(["scratch/hmmscan/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
+                    ["scratch/reference/{}.hmm".format(gene),
+                     "scratch/{}.collapsed.pfa".format(dataset)],
+                    "hmmscan -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmscan/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmscan-csv.sh",
+                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
+                    "bash $SOURCES > $TARGET")
+
+# Merge evalues into a single csv
+env.Command("scratch/evalue.csv",
+            ["lib/merge-csv.py"] + ["scratch/hmmscan/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
+            "python $SOURCES > $TARGET")
+
+# Plot evalues
+env.Command("evalue.png",
+            ["lib/plot-evalue.R",
+             "scratch/evalue.csv",
+             Value("LANL reference")],
+            "Rscript $SOURCES $TARGET")
+env.Command("evalue-reference.png",
+            ["lib/plot-evalue-reference.R",
+             "scratch/evalue.csv"],
+            "Rscript $SOURCES $TARGET")
+
+# Thresholds determined by evalue plot
+thresholds = {
+    "env": 0.00148,
+    "gag": 0.0018,
+    "nef": 0.00065,
+    "pol": 0.000464,
+    "tat": 0.000245,
+    "vif": 0.000543,
+    "vpr": 0.000935,
+    "vpu": 0.0011
+}
+
+# Rerun hmmscan with thresholds
+for dataset in ["5VM"]:
+    for gene in genes:
+        env.Command("scratch/hmmscan/{}/{}.pfa".format(dataset, gene),
+                    ["lib/filter.py",
+                     Value(thresholds[gene]),
+                     "scratch/hmmscan/{}/{}.csv".format(dataset, gene),
+                     "scratch/{}.collapsed.pfa".format(dataset)],
+                    "python $SOURCES > $TARGET")
+        env.Command(["scratch/hmmsearch/{}/{}.sto".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+                    ["scratch/reference/{}.hmm".format(gene),
+                     "scratch/hmmscan/{}/{}.pfa".format(dataset, gene)],
+                    "hmmsearch --max --noali -A ${TARGETS[0]} -o ${TARGETS[1]} --domtblout ${TARGETS[2]} $SOURCES")
+        env.Command(["scratch/hmmsearch/{}/{}.hmm".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.hmm.h3m".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.hmm.h3i".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.hmm.h3f".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.hmm.h3p".format(dataset, gene)],
+                    "scratch/hmmsearch/{}/{}.sto".format(dataset, gene),
+                    "hmmbuild $TARGET $SOURCE && hmmpress $TARGET")
+for dataset in datasets:
+    for gene in genes:
+        env.Command(["scratch/hmmscan2/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmscan2/{}/{}.tsv".format(dataset, gene)],
+                    ["scratch/hmmsearch/5VM/{}.hmm".format(gene),
+                     "scratch/{}.collapsed.pfa".format(dataset)],
+                    "hmmscan -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmscan2/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmscan-csv.sh",
+                     "scratch/hmmscan2/{}/{}.tsv".format(dataset, gene)],
+                    "bash $SOURCES > $TARGET")
+
+# Merge re-aligned evalues into a single csv
+env.Command("scratch/evalue2.csv",
+            ["lib/merge-csv.py"] + ["scratch/hmmscan2/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
+            "python $SOURCES > $TARGET")
+
+# Plot re-aligned evalues
+env.Command("evalue-5VM.png",
+            ["lib/plot-evalue.R",
+             "scratch/evalue2.csv",
+             Value("5VM")],
+            "Rscript $SOURCES $TARGET")
+
+# vim: syntax=python expandtab sw=4 ts=4

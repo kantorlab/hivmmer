@@ -11,9 +11,9 @@ def parse_args():
                       nargs=1,
                       help="path to nucleotide FASTA file, or '-' to read from stdin")
   parser.add_argument("--allow-stop-codons",
-                      action="store_true",
-                      default=False,
-                      help="allow stop codons [default: False]")
+                      type=int,
+                      default=0,
+                      help="# of stop codons to allow [default: 0]")
   return parser.parse_args()
 
 def translate(fasta, allow_stop_codons):
@@ -41,7 +41,7 @@ def translate(fasta, allow_stop_codons):
 
     for i in range(3):
       aa = Seq.translate(seq[i:])
-      if (not allow_stop_codons) and aa.count("*") > 0:
+      if aa.count("*") > allow_stop_codons:
         nstop += 1
       else:
         print(">%s-%d'" % (record.id, i))
