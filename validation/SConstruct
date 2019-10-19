@@ -9,7 +9,7 @@ genes = dict((row.gene, row.aa_trim_length) for i, row in wgs.iterrows())
 for gene, end in genes.items():
     env.Command("scratch/reference/{}.fa".format(gene),
                 ["lib/trim-reference.py",
-                 "../data/HIV1_FLT_2017_{}_PRO.fasta".format(gene),
+                 "data/HIV1_FLT_2017_{}_PRO.fasta".format(gene),
                  Value(1),
                  Value(end)],
                 "python $SOURCES > $TARGET")
