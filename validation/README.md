@@ -50,8 +50,8 @@ as the reference database.
 **5VM**: the [5 Virus Mix](https://github.com/cbg-ethz/5-virus-mix), an NGS data set
 of 5 near full length HIV plasmid sequences mixed in equal proportions.
 
-**UniVec**: a curated data set from NCBI that contains representative sequences of
-common laboratory contaminants.
+**[UniVec](https://www.ncbi.nlm.nih.gov/tools/vecscreen/univec/)**: a curated data set
+from NCBI that contains representative sequences of common laboratory contaminants.
 
 **random**: a synthetic data set with the same structure (number and length of sequences)
 as 5VM, but in which the individual nucleotides in the sequences have been randomly sampled.
