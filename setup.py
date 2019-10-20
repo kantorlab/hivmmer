@@ -1,11 +1,12 @@
-#!/usr/bin/env python
-
+from setuptools import setup, find_packages
 from glob import glob
-from setuptools import setup
+
+with open("hivmmer/VERSION") as f:
+    version = f.read().strip()
 
 setup(
     name="hivmmer",
-    version="0.1.3",
+    version=version,
     author="Mark Howison",
     author_email="mhowison@ripl.org",
     url="https://github.com/kantorlab/hivmmer",
@@ -20,6 +21,9 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Topic :: Scientific/Engineering :: Bio-Informatics"],
+    provides=["hivmmer"],
     install_requires=["BioPython>=1.69", "numpy>=1.13.0", "pandas>=0.22.0"],
-    scripts=glob("scripts/*")
+    packages=find_packages(),
+    package_data={"hivmmer": ["data/*"]},
+    scripts=glob("scripts/*"),
 )
