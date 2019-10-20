@@ -1,61 +1,26 @@
-#!/bin/bash
-set -e
-VERSION="0.1.3"
+#!/usr/bin/env python
+import argparse
+import hivmmer
 
 ### ARGUMENTS ###
-
-function usage() {
-  echo "\
-usage: hivmmer --id ID --fq1 FASTQ1 --fq2 FASTQ2 --ref REFERENCE [--cpu N]
-               [--region REGION] [--allow-stop-codons]
-               [-h|--help] [-v|--version]
-
-"
-}
-
-OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu:,region:,allow-stop-codons -n 'parse-options' -- "$@"`
-eval set -- "$OPTS"
-
-ID=
-FQ1=
-FQ2=
-REF=
-CPU=1
-REGION=pol
-STOPC=
-
-while true; do
-  case "$1" in
-    -h|--help) usage; exit 0 ;;
-    -v|--version) echo "hivmmer $VERSION"; exit 0 ;;
-    --id)  ID="$2";  shift 2 ;;
-    --fq1) FQ1="$2"; shift 2 ;;
-    --fq2) FQ2="$2"; shift 2 ;;
-    --ref) REF="$2"; shift 2 ;;
-    --cpu) CPU="$2"; shift 2 ;;
-    --region) REGION="$2"; shift 2 ;;
-    --allow-stop-codons) STOPC="--allow-stop-codons"; shift 1 ;;
-    --) shift; break ;;
-    *) break ;;
-  esac
-done
-
-echo "ID:     $ID"
-echo "FQ1:    $FQ1"
-echo "FQ2:    $FQ2"
-echo "REF:    $REF"
-echo "CPU:    $CPU"
-echo "REGION: $REGION"
-echo "STOPC:  $STOPC"
-
-if [ -z "$ID" ] || [ -z "$FQ1" ] || [ -z "$FQ2" ] || [ -z "$REF" ]
-then
-  usage
-  exit 1
-fi
+parser = argparse.ArgumentParser(description=hivmmer.__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument("FASTQ1",
+                    help="FASTQ file with forward Illumina reads")
+parser.add_argument("FASTQ2",
+                    help="FASTQ file with reverse Illumina reads")
+parser.add_argument("-t", "--threads",
+                    default=1,
+                    metavar="N",
+                    type=int,
+                    help="number of threads")
+parser.add_argument("-v", "--version",
+                    action="version",
+                    version="hivmmer {}".format(hivmmer.__version__))
+args = parser.parse_args()
 
 ### PIPELINE ###
-
+"""
 echo "### STAGE 1: PEAR ###"
 
 pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
@@ -87,3 +52,6 @@ hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${I
 wait
 
 echo "### FINISHED ###"
+"""
+
+# vim: expandtab sw=2 ts=2

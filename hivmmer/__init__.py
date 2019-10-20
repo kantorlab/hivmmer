@@ -9,7 +9,6 @@ Please cite:
 Howison M, Coetzer M, Kantor R. 2019. Measurement error and variant-calling in
 deep Illumina sequencing of HIV. Bioinformatics 35(12): 2029-2035.
 doi:10.1093/bioinformatics/bty919
-
 """
 
 import os
