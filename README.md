@@ -101,21 +101,11 @@ following dependencies on external tools (which must be in your PATH):
 
 Note: PEAR source code is available under an academic license from [https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis](https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis).
 
-### Preparing a pHMM reference
+### pHMM references
 
-hivmmer comes with prebuilt amino acid pHMM references for the *pol*, *int* and
-*env* regions based on curated multiple-sequence alignments downloaded from the
+hivmmer comes with prepackaged amino acid profile Hidden Markov Models for the entire
+HIV genome, based on curated multiple-sequence alignments downloaded from the
 [Los Alamos HIV Sequence Database](http//www.hiv.lanl.gov).
-
-A custome reference can be created using the included `hivmmer-trim-reference`
-utility and the `hmmbuild` program from HMMER. For example, the *pol* reference
-was created using the commands:
-
-    hivmmer-trim-reference HIV1_ALL_2016_2253-3870_DNA.fasta >HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.fasta
-    hmmbuild HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.hmm HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.fasta
-
-The resulting pHMM `HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.hmm` can then be
-passed to `hivmmer` as with the `--ref` option.
 
 ## Authors
 
