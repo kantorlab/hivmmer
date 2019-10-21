@@ -21,6 +21,16 @@ parser.add_argument("-t", "--threads",
                     metavar="N",
                     type=int,
                     help="number of threads")
+parser.add_argument("-l", "--min-length",
+                    default=75,
+                    metavar="L",
+                    type=int,
+                    help="minimum read length to retain")
+parser.add_argument("-q", "--min-quality",
+                    default=25,
+                    metavar="Q",
+                    type=int,
+                    help="minimum mean quality score to retain")
 parser.add_argument("-v", "--version",
                     action="version",
                     version="hivmmer {}".format(hivmmer.__version__))
@@ -29,7 +39,7 @@ fastq1 = os.path.abspath(args.FASTQ1)
 fastq2 = os.path.abspath(args.FASTQ2)
 
 if args.threads > cpu_count():
-    print("WARNING: --threads {} is larger than cpu count {}".format(args.threads, cpu_count())
+    print("WARNING: --threads {} is larger than cpu count {}".format(args.threads, cpu_count()))
 
 ### PIPELINE ###
 
@@ -52,12 +62,11 @@ with open("logs/pear.log", "w") as log:
 assert status == 0, "ERROR: PEAR exited with status {} - check pear.log".format(status)
 
 print("Filtering and deduplicating PEAR sequences")
-with open("logs/filter.log", "w") as log:
-    hivmmer.filter(["sequences/pear.assembled.fastq",
-                    "sequences/pear.unassembled.forward.fastq",
-                    "sequences/pear.unassembled.reverse.fastq"],
-                   "sequences/deduplicated.fa",
-                   log)
+keep = {}
+for pearfile in ("assembled", "unassembled.forward", "unassembled.reverse"):
+    hivmmer.filter.add("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
+with open("sequences/deduplicated.fa", "w") as f:
+    hivmmer.filter.tofasta(keep, f)
 
 print("Translating deduplicated sequences to amino acid sequences")
 with open("logs/translate.log", "w") as f:

@@ -14,6 +14,8 @@ doi:10.1093/bioinformatics/bty919
 import os
 from importlib import resources
 
+import hivmmer.filter as filter
+
 __version__ = resources.read_text(__name__, "VERSION").strip()
 
 # Genes are ordered by descending size.
