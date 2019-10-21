@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 import argparse
 import hivmmer
+import os
+from subprocess import run
 
 ### ARGUMENTS ###
+
 parser = argparse.ArgumentParser(description=hivmmer.__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("FASTQ1",
                     help="FASTQ file with forward Illumina reads")
 parser.add_argument("FASTQ2",
                     help="FASTQ file with reverse Illumina reads")
+parser.add_argument("-o", "--outdir",
+                    default=os.getcwd(),
+                    help="output directory (default: current directory)")
 parser.add_argument("-t", "--threads",
                     default=1,
                     metavar="N",
@@ -18,40 +24,53 @@ parser.add_argument("-v", "--version",
                     action="version",
                     version="hivmmer {}".format(hivmmer.__version__))
 args = parser.parse_args()
+fastq1 = os.path.abspath(args.FASTQ1)
+fastq2 = os.path.abspath(args.FASTQ2)
 
 ### PIPELINE ###
-"""
-echo "### STAGE 1: PEAR ###"
 
-pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
+print("Creating output directory:")
+print(args.outdir)
+os.makedirs(args.outdir, exist_ok=True)
+os.chdir(args.outdir)
 
-echo "### STAGE 2: QC FILTERING AND DEDUPE ###"
+print("Running PEAR on FASTQ inputs (see pear.log):")
+print(fastq1)
+print(fastq2)
+with open("pear.log", "w") as log:
+    status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "pear", "-k", "-j", args.threads],
+                 stdout=log,
+                 stderr=log).returncode
+assert status == 0, "ERROR: PEAR exited with status {} - consult pear.log".format(status)
 
-hivmmer-filter ${ID}.pear.assembled.fastq ${ID}.pear.unassembled.forward.fastq ${ID}.pear.unassembled.reverse.fastq >${ID}.collapsed.fa
+print("Filtering and deduplicating PEAR output (see filter.log)")
+with open("filter.log", "w") as log:
+    hivmmer.filter(["pear.assembled.fastq",
+                    "pear.unassembled.forward.fastq",
+                    "pear.unassembled.reverse.fastq"],
+                   "deduplicated.fa",
+                   log)
 
-echo "### STAGE 3: TRANSLATE ###"
+print("Translating to amino acid sequences")
+with open("translate.log", "w") as f:
+    hivmmer.translate("deduplicated.fa", "translated.pfa", log)
 
-hivmmer-translate $STOPC ${ID}.collapsed.fa >${ID}.collapsed.pfa
+print("Copying pHMM references to:")
+print(os.path.abspath("references"))
+os.makedirs("references", exist_ok=True)
+hivmmer.copy_hmms("references")
 
-echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
+for gene in hivmmer.genes:
+    print("Aligning {} with hmmscan".format(gene))
+    with open("filter.log", "w") as log:
+        status = run(["hmmscan", "--cpu", args.threads, "--max", "-E", hivmmer.thresholds[gene],
+                      "-o", "{}.hmmscan.txt".format(gene), "references/{}.hmm".format(gene), "translated.pfa"],
+                     stdout=log,
+                     stderr=log).returncode
+    assert status == 0, "ERROR: hmmscan exited with status {} - check {}.hmmscan.log".format(status, gene)
 
-hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt "$REF" ${ID}.collapsed.pfa
-hmmemit -c "$REF" >${ID}.hmmsearch1.ref.consensus.fa
-hmmbuild --cpu $CPU ${ID}.hmmsearch1.hmm ${ID}.hmmsearch1.sto
+print("Extracting codons from hmmscan alignments")
 
-echo "### STAGE 5: HMMSEARCH, ROUND 2 ###"
+print("Finished.")
 
-hmmsearch --cpu $CPU -E 1000000 --domE 1000000 --max --notextw -A ${ID}.hmmsearch2.sto -o ${ID}.hmmsearch2.txt ${ID}.hmmsearch1.hmm ${ID}.collapsed.pfa
-hmmemit -c ${ID}.hmmsearch1.hmm >${ID}.hmmsearch2.ref.consensus.fa
-hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
-
-echo "### STAGE 6: CODON TABLE ###"
-
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa --region $REGION &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa --region $REGION &
-wait
-
-echo "### FINISHED ###"
-"""
-
-# vim: expandtab sw=2 ts=2
+# vim: expandtab sw=4 ts=4
