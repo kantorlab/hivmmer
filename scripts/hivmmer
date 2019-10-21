@@ -69,8 +69,8 @@ with open("sequences/deduplicated.fa", "w") as f:
     hivmmer.filter.tofasta(keep, f)
 
 print("Translating deduplicated sequences to amino acid sequences")
-with open("logs/translate.log", "w") as f:
-    hivmmer.translate("sequences/deduplicated.fa", "sequences/translated.pfa", log)
+with open("sequences/translated.pfa", "w") as f, open("logs/translate.log", "w") as log:
+    hivmmer.translate("sequences/deduplicated.fa", out, log)
 
 print("Copying pHMM references")
 hivmmer.copy_hmms("references")

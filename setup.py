@@ -27,6 +27,7 @@ setup(
     package_data={"hivmmer": ["data/*"]},
     scripts=glob("scripts/*"),
     entry_points={
-        "console_scripts": ["hivmmer-filter=hivmmer.filter:_run"]
+        "console_scripts": ["hivmmer-filter=hivmmer.filter:_run",
+                            "hivmmer-translate=hivmmer.translate:_run"]
     }
 )

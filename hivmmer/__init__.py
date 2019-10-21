@@ -15,6 +15,7 @@ import os
 from importlib import resources
 
 import hivmmer.filter as filter
+from .translate import translate
 
 __version__ = resources.read_text(__name__, "VERSION").strip()
 
