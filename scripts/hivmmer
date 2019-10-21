@@ -2,6 +2,7 @@
 import argparse
 import hivmmer
 import os
+from multiprocessing import cpu_count, Pool
 from subprocess import run
 
 ### ARGUMENTS ###
@@ -27,49 +28,63 @@ args = parser.parse_args()
 fastq1 = os.path.abspath(args.FASTQ1)
 fastq2 = os.path.abspath(args.FASTQ2)
 
+if args.threads > cpu_count():
+    print("WARNING: --threads {} is larger than cpu count {}".format(args.threads, cpu_count())
+
 ### PIPELINE ###
 
-print("Creating output directory:")
+print("Creating output directories in:")
 print(args.outdir)
 os.makedirs(args.outdir, exist_ok=True)
 os.chdir(args.outdir)
+os.makedirs("logs", exist_ok=True)
+os.makedirs("sequences", exist_ok=True)
+os.makedirs("references", exist_ok=True)
+os.makedirs("alignments", exist_ok=True)
 
-print("Running PEAR on FASTQ inputs (see pear.log):")
+print("Running PEAR on FASTQ inputs:")
 print(fastq1)
 print(fastq2)
-with open("pear.log", "w") as log:
-    status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "pear", "-k", "-j", args.threads],
+with open("logs/pear.log", "w") as log:
+    status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "sequences/pear", "-k", "-j", args.threads],
                  stdout=log,
                  stderr=log).returncode
-assert status == 0, "ERROR: PEAR exited with status {} - consult pear.log".format(status)
+assert status == 0, "ERROR: PEAR exited with status {} - check pear.log".format(status)
 
-print("Filtering and deduplicating PEAR output (see filter.log)")
-with open("filter.log", "w") as log:
-    hivmmer.filter(["pear.assembled.fastq",
-                    "pear.unassembled.forward.fastq",
-                    "pear.unassembled.reverse.fastq"],
-                   "deduplicated.fa",
+print("Filtering and deduplicating PEAR sequences")
+with open("logs/filter.log", "w") as log:
+    hivmmer.filter(["sequences/pear.assembled.fastq",
+                    "sequences/pear.unassembled.forward.fastq",
+                    "sequences/pear.unassembled.reverse.fastq"],
+                   "sequences/deduplicated.fa",
                    log)
 
-print("Translating to amino acid sequences")
-with open("translate.log", "w") as f:
-    hivmmer.translate("deduplicated.fa", "translated.pfa", log)
+print("Translating deduplicated sequences to amino acid sequences")
+with open("logs/translate.log", "w") as f:
+    hivmmer.translate("sequences/deduplicated.fa", "sequences/translated.pfa", log)
 
-print("Copying pHMM references to:")
-print(os.path.abspath("references"))
-os.makedirs("references", exist_ok=True)
+print("Copying pHMM references")
 hivmmer.copy_hmms("references")
 
 for gene in hivmmer.genes:
     print("Aligning {} with hmmscan".format(gene))
-    with open("filter.log", "w") as log:
+    with open("logs/hmmscan.{}.log".format(gene), "w") as log:
         status = run(["hmmscan", "--cpu", args.threads, "--max", "-E", hivmmer.thresholds[gene],
-                      "-o", "{}.hmmscan.txt".format(gene), "references/{}.hmm".format(gene), "translated.pfa"],
+                      "-o", "hmmscan/{}.txt".format(gene), "references/{}.hmm".format(gene), "sequences/translated.pfa"],
                      stdout=log,
                      stderr=log).returncode
-    assert status == 0, "ERROR: hmmscan exited with status {} - check {}.hmmscan.log".format(status, gene)
+    assert status == 0, "ERROR: hmmscan exited with status {} - check hmmscan.{}.log".format(status, gene)
 
 print("Extracting codons from hmmscan alignments")
+pool = Pool(args.threads)
+def codons(gene):
+    with open("logs/codons.{}.log".format(gene), "w") as log:
+        return hivmmer.codons("hmmscan/{}.txt".format(gene), "hmmscan/{}.codons.txt".format(gene), log)
+for gene, status in zip(hivmmer.genes, pool.map(codons, hivmmer.genes)):
+    assert status == True, "ERROR: failed to extract codons for {0} - check codons.{0}.log".format(gene)
+
+print("Merging codons and converting to HXB2 indexing")
+
 
 print("Finished.")
 
