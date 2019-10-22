@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from glob import glob
 
 with open("hivmmer/VERSION") as f:
     version = f.read().strip()
@@ -24,8 +23,8 @@ setup(
     provides=["hivmmer"],
     install_requires=["BioPython>=1.69", "numpy>=1.13.0", "pandas>=0.22.0"],
     packages=find_packages(),
-    package_data={"hivmmer": ["data/*"]},
-    scripts=glob("scripts/*"),
+    package_data={"hivmmer": ["VERSION", "hiv.*"]}
+    scripts=["scripts/hivmmer"],
     entry_points={
         "console_scripts": ["hivmmer-filter=hivmmer.filter:_run",
                             "hivmmer-translate=hivmmer.translate:_run"]

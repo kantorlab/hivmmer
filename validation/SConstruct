@@ -81,22 +81,22 @@ for dataset in datasets:
 
 datasets += ["reference"]
 
-# hivmmer Stage 4: hmmscan
+# hivmmer Stage 4: hmmsearch
 for dataset in datasets:
     for gene in genes:
-        env.Command(["scratch/hmmscan/{}/{}.txt".format(dataset, gene),
-                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
+        env.Command(["scratch/hmmsearch/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
                     ["scratch/reference/{}.hmm".format(gene),
                      "scratch/{}.collapsed.pfa".format(dataset)],
-                    "hmmscan -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
-        env.Command("scratch/hmmscan/{}/{}.csv".format(dataset, gene),
-                    ["lib/hmmscan-csv.sh",
-                     "scratch/hmmscan/{}/{}.tsv".format(dataset, gene)],
+                    "hmmsearch -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmsearch/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmsearch-csv.sh",
+                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
                     "bash $SOURCES > $TARGET")
 
 # Merge evalues into a single csv
 env.Command("scratch/evalue.csv",
-            ["lib/merge-csv.py"] + ["scratch/hmmscan/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
+            ["lib/merge-csv.py"] + ["scratch/hmmsearch/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
             "python $SOURCES > $TARGET")
 
 # Plot evalues
@@ -112,53 +112,53 @@ env.Command("evalue-reference.png",
 
 # Thresholds determined by evalue plot
 thresholds = {
-    "env": 0.00148,
-    "gag": 0.0018,
-    "nef": 0.00065,
-    "pol": 0.000464,
-    "tat": 0.000245,
-    "vif": 0.000543,
-    "vpr": 0.000935,
-    "vpu": 0.0011
+    "env": 18.0,
+    "gag": 6.5,
+    "nef": 4.4,
+    "pol": 6.6,
+    "tat": 0.8,
+    "vif": 3.1,
+    "vpr": 2.7,
+    "vpu": 2.3
 }
 
-# Rerun hmmscan with thresholds
+# Rerun hmmsearch with thresholds
 for dataset in ["5VM"]:
     for gene in genes:
-        env.Command("scratch/hmmscan/{}/{}.pfa".format(dataset, gene),
+        env.Command("scratch/hmmsearch1/{}/{}.pfa".format(dataset, gene),
                     ["lib/filter.py",
                      Value(thresholds[gene]),
-                     "scratch/hmmscan/{}/{}.csv".format(dataset, gene),
+                     "scratch/hmmsearch/{}/{}.csv".format(dataset, gene),
                      "scratch/{}.collapsed.pfa".format(dataset)],
                     "python $SOURCES > $TARGET")
-        env.Command(["scratch/hmmsearch/{}/{}.sto".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.txt".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.tsv".format(dataset, gene)],
+        env.Command(["scratch/hmmsearch1/{}/{}.sto".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.tsv".format(dataset, gene)],
                     ["scratch/reference/{}.hmm".format(gene),
-                     "scratch/hmmscan/{}/{}.pfa".format(dataset, gene)],
+                     "scratch/hmmsearch1/{}/{}.pfa".format(dataset, gene)],
                     "hmmsearch --max --noali -A ${TARGETS[0]} -o ${TARGETS[1]} --domtblout ${TARGETS[2]} $SOURCES")
-        env.Command(["scratch/hmmsearch/{}/{}.hmm".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.hmm.h3m".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.hmm.h3i".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.hmm.h3f".format(dataset, gene),
-                     "scratch/hmmsearch/{}/{}.hmm.h3p".format(dataset, gene)],
-                    "scratch/hmmsearch/{}/{}.sto".format(dataset, gene),
+        env.Command(["scratch/hmmsearch1/{}/{}.hmm".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.hmm.h3m".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.hmm.h3i".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.hmm.h3f".format(dataset, gene),
+                     "scratch/hmmsearch1/{}/{}.hmm.h3p".format(dataset, gene)],
+                    "scratch/hmmsearch1/{}/{}.sto".format(dataset, gene),
                     "hmmbuild $TARGET $SOURCE && hmmpress $TARGET")
 for dataset in datasets:
     for gene in genes:
-        env.Command(["scratch/hmmscan2/{}/{}.txt".format(dataset, gene),
-                     "scratch/hmmscan2/{}/{}.tsv".format(dataset, gene)],
-                    ["scratch/hmmsearch/5VM/{}.hmm".format(gene),
+        env.Command(["scratch/hmmsearch2/{}/{}.txt".format(dataset, gene),
+                     "scratch/hmmsearch2/{}/{}.tsv".format(dataset, gene)],
+                    ["scratch/hmmsearch1/5VM/{}.hmm".format(gene),
                      "scratch/{}.collapsed.pfa".format(dataset)],
-                    "hmmscan -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
-        env.Command("scratch/hmmscan2/{}/{}.csv".format(dataset, gene),
-                    ["lib/hmmscan-csv.sh",
-                     "scratch/hmmscan2/{}/{}.tsv".format(dataset, gene)],
+                    "hmmsearch -E 1000000 --domE 1000000 --max --noali -o ${TARGETS[0]} --domtblout ${TARGETS[1]} $SOURCES")
+        env.Command("scratch/hmmsearch2/{}/{}.csv".format(dataset, gene),
+                    ["lib/hmmsearch-csv.sh",
+                     "scratch/hmmsearch2/{}/{}.tsv".format(dataset, gene)],
                     "bash $SOURCES > $TARGET")
 
 # Merge re-aligned evalues into a single csv
 env.Command("scratch/evalue2.csv",
-            ["lib/merge-csv.py"] + ["scratch/hmmscan2/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
+            ["lib/merge-csv.py"] + ["scratch/hmmsearch2/{}/{}.csv".format(dataset, gene) for dataset in datasets for gene in genes],
             "python $SOURCES > $TARGET")
 
 # Plot re-aligned evalues

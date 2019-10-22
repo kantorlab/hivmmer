@@ -19,11 +19,11 @@ for csv_file in sys.argv[1:]:
     with open(csv_file) as f:
         for row in csv.DictReader(f):
             print(dataset,
-                  row["target_name"],
-                  dblength[row["target_name"]],
+                  row["query_name"],
+                  dblength[row["query_name"]],
                   row["evalue"],
                   row["score"],
-                  row["query_length"],
-                  row["query_name"].partition("-")[0],
+                  row["target_length"],
+                  row["target_name"].partition("-")[0],
                   sep=",")
 
