@@ -17,7 +17,7 @@ def translate(filename, allow_stop_codons, out=sys.stdout, log=sys.stderr):
 
     nskipped = {"N": 0, "*": 0}
 
-    for n, record in enumerate(SeqIO.parse(fasta, "fasta")):
+    for n, record in enumerate(SeqIO.parse(filename, "fasta")):
 
         nstop = 0
         seq = str(record.seq)

@@ -15,7 +15,7 @@ def add(filename, min_length, min_quality, keep={}):
     count as the value.
     """
     for seq in SeqIO.parse(filename, "fastq"):
-        if len(seq) > l and sum(seq.letter_annotations["phred_quality"]) / len(seq) > q:
+        if len(seq) > min_length and sum(seq.letter_annotations["phred_quality"]) / len(seq) > min_quality:
             seq = str(seq.seq)
             keep[seq] = keep.get(seq, 0) + 1
 
