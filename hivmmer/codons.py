@@ -31,20 +31,15 @@ dblengths = {
     "vpu": 53*4573
 }
 
-def codons(readfile, hmmerfile, gene, outfile, log=sys.stderr):
+def codons(readfile, hmmerfile, gene, out=sys.stdout):
     """
     """
 
     dblength  = dblengths[gene]
     threshold = thresholds[gene]
 
-    print("Indexing reads in:", readfile, file=log)
     reads = SeqIO.index(readfile, "fasta")
-
-    print("Parsing hmmsearch output in:", hmmerfile, file=log)
     hmmer = SearchIO.read(hmmerfile, "hmmer3-text")
-
-    print("Counting codons", file=sys.stderr)
 
     # All genes are <1000 AA
     counts = [{} for _ in range(1000)]
@@ -104,12 +99,10 @@ def codons(readfile, hmmerfile, gene, outfile, log=sys.stderr):
                     k += ii + 1 # increment the alignment
 
     # output
-    with open(outfile, "w") as f:
-        print("pos", "codon", "count", sep="\t", file=f)
-        for i, count in enumerate(counts):
-            for codon in sorted(count, key=count.get, reverse=True):
-                print(i, codon, count[codon], sep="\t", file=f)
+    print("pos", "codon", "count", sep="\t", file=out)
+    for i, count in enumerate(counts):
+        for codon in sorted(count, key=count.get, reverse=True):
+            print(i, codon, count[codon], sep="\t", file=out)
 
-    return True
 
 # vim: expandtab sw=4 ts=4

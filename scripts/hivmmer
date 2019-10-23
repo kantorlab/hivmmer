@@ -88,22 +88,13 @@ for gene in hivmmer.genes:
     assert status == 0, "ERROR: hmmsearch exited with status {} - check hmmsearch.{}.log".format(status, gene)
 
 print("Extracting codons from hmmsearch alignments")
-if args.threads > 1:
-    mapper = Pool(args.threads).map
-else:
-    mapper = map
-def codons(gene):
-    with open("logs/codons.{}.log".format(gene), "w") as log:
-        return hivmmer.codons("sequences/deduplicated.fa",
-                              "alignments/{}.txt".format(gene),
-                              gene,
-                              "alignments/{}.codons.tsv".format(gene),
-                              log)
-for gene, status in zip(hivmmer.genes, mapper(codons, hivmmer.genes)):
-    assert status == True, "ERROR: failed to extract codons for {0} - check codons.{0}.log".format(gene)
+for gene in hivmmer.genes:
+    with open("alignments/{}.codons.tsv".format(gene), "w") as f:
+        hivmmer.codons("sequences/deduplicated.fa",
+                       "alignments/{}.txt".format(gene),
+                       gene, f)
 
 print("Merging codons and converting to HXB2 indexing")
-
 
 print("Finished.")
 
