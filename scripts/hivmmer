@@ -15,22 +15,22 @@ parser.add_argument("FASTQ2",
                     help="FASTQ file with reverse Illumina reads")
 parser.add_argument("-o", "--outdir",
                     default=os.getcwd(),
-                    help="output directory (default: current directory)")
+                    help="output directory [current directory]")
 parser.add_argument("-t", "--threads",
                     default=1,
                     metavar="N",
                     type=int,
-                    help="number of threads")
+                    help="number of threads [1]")
 parser.add_argument("-l", "--min-length",
                     default=75,
                     metavar="L",
                     type=int,
-                    help="minimum read length to retain")
+                    help="minimum read length to retain [75]")
 parser.add_argument("-q", "--min-quality",
                     default=25,
                     metavar="Q",
                     type=int,
-                    help="minimum mean quality score to retain")
+                    help="minimum mean quality score to retain [25]")
 parser.add_argument("-v", "--version",
                     action="version",
                     version="hivmmer {}".format(hivmmer.__version__))
@@ -44,7 +44,7 @@ if args.threads > cpu_count():
 ### PIPELINE ###
 
 print("Creating output directories in:")
-print(args.outdir)
+print(os.path.abspath(args.outdir))
 os.makedirs(args.outdir, exist_ok=True)
 os.chdir(args.outdir)
 os.makedirs("logs", exist_ok=True)
@@ -56,7 +56,7 @@ print("Running PEAR on FASTQ inputs:")
 print(fastq1)
 print(fastq2)
 with open("logs/pear.log", "w") as log:
-    status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "sequences/pear", "-k", "-j", args.threads],
+    status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "sequences/pear", "-k", "-j", str(args.threads)],
                  stdout=log,
                  stderr=log).returncode
 assert status == 0, "ERROR: PEAR exited with status {} - check pear.log".format(status)
@@ -70,26 +70,36 @@ with open("sequences/deduplicated.fa", "w") as f:
 
 print("Translating deduplicated sequences to amino acid sequences")
 with open("sequences/translated.pfa", "w") as f, open("logs/translate.log", "w") as log:
-    hivmmer.translate("sequences/deduplicated.fa", out, log)
+    hivmmer.translate("sequences/deduplicated.fa", 1, f, log)
 
 print("Copying pHMM references")
 hivmmer.copy_hmms("references")
 
 for gene in hivmmer.genes:
-    print("Aligning {} with hmmscan".format(gene))
-    with open("logs/hmmscan.{}.log".format(gene), "w") as log:
-        status = run(["hmmscan", "--cpu", args.threads, "--max", "-E", hivmmer.thresholds[gene],
-                      "-o", "hmmscan/{}.txt".format(gene), "references/{}.hmm".format(gene), "sequences/translated.pfa"],
+    print("Aligning {} with hmmsearch".format(gene))
+    with open("logs/hmmsearch.{}.log".format(gene), "w") as log:
+        status = run(["hmmsearch", "--max",
+                      "--cpu", str(args.threads),
+                      "-o", "alignments/{}.txt".format(gene),
+                      "references/{}.hmm".format(gene),
+                      "sequences/translated.pfa"],
                      stdout=log,
                      stderr=log).returncode
-    assert status == 0, "ERROR: hmmscan exited with status {} - check hmmscan.{}.log".format(status, gene)
+    assert status == 0, "ERROR: hmmsearch exited with status {} - check hmmsearch.{}.log".format(status, gene)
 
-print("Extracting codons from hmmscan alignments")
-pool = Pool(args.threads)
+print("Extracting codons from hmmsearch alignments")
+if args.threads > 1:
+    mapper = Pool(args.threads).map
+else:
+    mapper = map
 def codons(gene):
     with open("logs/codons.{}.log".format(gene), "w") as log:
-        return hivmmer.codons("hmmscan/{}.txt".format(gene), "hmmscan/{}.codons.txt".format(gene), log)
-for gene, status in zip(hivmmer.genes, pool.map(codons, hivmmer.genes)):
+        return hivmmer.codons("sequences/deduplicated.fa",
+                              "alignments/{}.txt".format(gene),
+                              gene,
+                              "alignments/{}.codons.tsv".format(gene),
+                              log)
+for gene, status in zip(hivmmer.genes, mapper(codons, hivmmer.genes)):
     assert status == True, "ERROR: failed to extract codons for {0} - check codons.{0}.log".format(gene)
 
 print("Merging codons and converting to HXB2 indexing")

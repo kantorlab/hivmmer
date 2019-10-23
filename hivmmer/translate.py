@@ -27,7 +27,8 @@ def translate(filename, allow_stop_codons, out=sys.stdout, log=sys.stderr):
             continue
 
         for i in range(3):
-            aa = Seq.translate(seq[i:])
+            j = 3 * ((len(seq) - i) // 3) + i
+            aa = Seq.translate(seq[i:j])
             if aa.count("*") > 0:
                 nstop += 1
             else:
@@ -37,7 +38,8 @@ def translate(filename, allow_stop_codons, out=sys.stdout, log=sys.stderr):
         seq = str(record.seq.reverse_complement())
 
         for i in range(3):
-            aa = Seq.translate(seq[i:])
+            j = 3 * ((len(seq) - i) // 3) + i
+            aa = Seq.translate(seq[i:j])
             if aa.count("*") > allow_stop_codons:
                 nstop += 1
             else:
@@ -62,7 +64,7 @@ def _run():
                         default=0,
                         metavar="N",
                         type=int,
-                        help="# of stop codons to allow [default: 0]")
+                        help="# of stop codons to allow [0]")
     args = parser.parse_args()
 
     fasta = args.FASTA[0]

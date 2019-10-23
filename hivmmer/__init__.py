@@ -16,24 +16,12 @@ from importlib import resources
 
 import hivmmer.filter as filter
 from .translate import translate
+from .codons import codons
 
 __version__ = resources.read_text(__name__, "VERSION").strip()
 
 # Genes are ordered by descending size.
 genes = ("pol", "env", "gag", "nef", "vif", "vpr", "vpu", "tat")
-
-# For more information on how thresholds were estimated,
-# see `validation/README.md` in the hivmmer git repo.
-thresholds = {
-    "env": 0.00148,
-    "gag": 0.0018,
-    "nef": 0.00065,
-    "pol": 0.000464,
-    "tat": 0.000245,
-    "vif": 0.000543,
-    "vpr": 0.000935,
-    "vpu": 0.0011
-}
 
 def copy_hmms(dst):
     """
