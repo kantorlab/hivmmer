@@ -3,10 +3,10 @@ import sys
 from Bio import AlignIO, SeqIO, Seq
 from io import StringIO
 
-aafile, start, end = sys.argv[1:]
+infile, start, end, outfile, hxb2file = sys.argv[1:]
 
 # fix short sequences
-records = list(SeqIO.parse(aafile, "fasta"))
+records = list(SeqIO.parse(infile, "fasta"))
 maxlen = max(len(record.seq) for record in records)
 
 # pad sequences so that they all have the same length
@@ -31,6 +31,9 @@ end = int(end)
 for a in align:
   if a.id == "B.FR.83.HXB2_LAI_IIIB_BRU.K03455":
     hxb2 = a
+    with open(hxb2file, "w") as f:
+      print(">hxb2", file=f)
+      print(str(a.seq).replace("-", ""), file=f)
     break
 
 # remove gaps in hxb2 sequence
@@ -39,10 +42,11 @@ coords = [i for i, aa in enumerate(hxb2.seq) if aa != "-" and aa != "#"]
 # trim to start/end coordinates
 coords = coords[start:end]
 
-for a in align:
-  aa = str(a.seq[coords[0]:coords[-1]]).replace("#", "-")
-  if not "*" in aa:
-    print(">%s" % a.description)
-    print(aa)
+with open(outfile, "w") as f:
+  for a in align:
+    aa = str(a.seq[coords[0]:coords[-1]]).replace("#", "-")
+    if not "*" in aa:
+      print(">%s" % a.description, file=f)
+      print(aa, file=f)
 
 # vim: expandtab sw=2 ts=2
