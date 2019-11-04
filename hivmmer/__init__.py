@@ -18,7 +18,7 @@ import hivmmer.filter as filter
 from .translate import translate
 from .codons import codons
 
-__version__ = resources.read_text(__name__, "VERSION").strip()
+__version__ = resources.read_text("hivmmer", "VERSION").strip()
 
 # Genes are ordered by descending size.
 genes = ("pol", "env", "gag", "nef", "vif", "vpr", "vpu", "tat")
@@ -31,6 +31,6 @@ def copy_hmms(dst):
         for ext in ("h3f", "h3i", "h3m", "h3p"):
             fname = "{}.hmm.{}".format(gene, ext)
             with open(os.path.join(dst, fname), "wb") as f1:
-                with resources.open_binary(__name__, fname) as f2:
+                with resources.open_binary("hivmmer", fname) as f2:
                     f1.write(f2.read())
 
