@@ -33,7 +33,7 @@ for a in align:
     hxb2 = a
     with open(hxb2file, "w") as f:
       print(">hxb2", file=f)
-      print(str(a.seq).replace("-", "").replace("*", "X"), file=f)
+      print(str(a.seq).replace("-", "").replace("#", "").replace("*", "X"), file=f)
     break
 
 # remove gaps in hxb2 sequence

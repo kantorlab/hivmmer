@@ -46,12 +46,12 @@ def codons(readfile, hmmerfile, gene, out=sys.stdout):
 
     dblength  = dblengths[gene]
     threshold = thresholds[gene]
-    hxb2      = _load_hxb2(gene)
+    coords    = _load_hxb2(gene)
 
     reads = SeqIO.index(readfile, "fasta")
     hmmer = SearchIO.read(hmmerfile, "hmmer3-text")
 
-    counts = [{} for _ in range(hxb2.hxb2.min(), hxb2.hxb2.max()+1, 3)]
+    counts = dict((hxb2, {}) for hxb2 in range(coords.hxb2.iloc[0], coords.hxb2.iloc[-1] + 1, 3))
 
     for hit in hmmer.hits:
 
@@ -59,7 +59,7 @@ def codons(readfile, hmmerfile, gene, out=sys.stdout):
         count = int(id.partition("-")[2])
 
         if frame.endswith("'"):
-            seq = reads[id].seq.reverse_complement()
+            seq = str(reads[id].seq.reverse_complement())
             offset = int(frame[:-1])
         else:
             seq = str(reads[id].seq)
@@ -69,54 +69,77 @@ def codons(readfile, hmmerfile, gene, out=sys.stdout):
 
             if math.log((dblength * hsp.hit_span) / 2**hsp.bitscore) >= threshold: continue
 
-            i    = 0                         # tracks position in the alignment
-            hmm  = hsp.query_start           # tracks position in the HMM reference sequence
-            read = 3*hsp.hit_start + offset  # tracks position in the read sequence
-
-            n = len(hsp.aln[0].seq)
+            i    = 0                         # tracks position in the alignment (0-indexed)
+            hmm  = hsp.query_start + 1       # tracks position in the HMM reference sequence (1-indexed)
+            read = 3*hsp.hit_start + offset  # tracks position in the read sequence (0-indexed)
 
             # read/reference sequences should have same length in alignment
+            n = len(hsp.aln[0].seq)
             assert len(hsp.aln[1].seq) == n
 
-            # alignment should not start with an insertion or deletion
+            # alignment should not start or end with an insertion
             assert hsp.aln[0].seq[0] != "."
-            assert hsp.aln[1].seq[0] != "-"
+            assert hsp.aln[0].seq[n-1] != "."
 
             while i < n:
 
-                hmm_aa_frame  = [hsp.aln[1].seq[i]]
-                read_aa_frame = [hsp.aln[0].seq[i]]
-                read_nt_frame = [seq[read:read+3]]
+                aa_frame = []
+                codon_frame = []
+                hxb2 = coords.loc[hmm, "hxb2"]
 
-                # Find insertions relative to HMM
-                while i < (n-1) and hsp.aln[0].seq[i+1] == ".":
-                    read_aa_frame.append(hsp.aln[1].seq[i+1])
+                aa = hsp.aln[1].seq[i]
+                if aa != "-":
+                    aa_frame.append(aa)
+                    codon_frame.append(seq[read:read+3])
                     read += 3
-                    read_nt_frame.append(seq[read:read+3])
+
+                # Extend frame with insertions relative to HMM
+                while i < (n-1) and hsp.aln[0].seq[i+1] == ".":
+                    aa_frame.append(hsp.aln[1].seq[i+1])
+                    codon_frame.append(seq[read:read+3])
+                    assert aa_frame[-1] != "-"
+                    read += 3
                     i += 1
 
-                # Find deletions relative to HMM
-                while i < (n-1) and hsp.aln[1].seq[i+1] == "-":
-                    hmm_frame.append(hsp.aln[0].seq[i+1])
-                    i += 1
+                # Extend frame with deletions relative to HXB2
+                for _ in range(coords.loc[hmm, "del"]):
 
-                # Adjust for HXB2 insertions
-                
+                    if i < (n-1):
+                        aa = hsp.aln[1].seq[i+1]
+                        if aa != "-":
+                            aa_frame.append(aa)
+                            codon_frame.append(seq[read:read+3])
+                            read += 3
+                            i += 1
 
-                # Adjust for HXB2 deletions
+                    while i < (n-1) and hsp.aln[0].seq[i+1] == ".":
+                        aa_frame.append(hsp.aln[1].seq[i+1])
+                        codon_frame.append(seq[read:read+3])
+                        assert aa_frame[-1] != "-"
+                        read += 3
+                        i += 1
 
-                # Test frame agreement
-                    assert read_aa.islower() or read_aa == "*"
-                    read_codon = seq[read:read+3]
-                    assert read_aa == Seq.translate(read_codon)
+                # Assign codons, adjusting coordinates relative to HXB2 insertions
+                assert len(aa_frame) == len(codon_frame)
+                for _ in range(coords.loc[hmm, "ins"] + 1):
+                    # Iterate through the codon frame
+                    if codon_frame:
+                        codon = codon_frame.pop(0)
+                        assert str(Seq.translate(codon)) == aa_frame.pop(0).upper()
+                        counts[hxb2][codon] = counts[hxb2].get(codon, 0) + count
+                    # Deletions occur when the codon frame is empty
+                    else:
+                        counts[hxb2][""] = counts[hxb2].get("", 0) + count
+                    hxb2 += 3
 
-                # Assign codons
+                i += 1
+                hmm += coords.loc[hmm, "del"] + 1
 
     # output
     print("hxb2", "codon", "count", sep="\t", file=out)
-    for i, count in enumerate(counts):
-        for codon in sorted(count, key=count.get, reverse=True):
-            print(i, codon, count[codon], sep="\t", file=out)
+    for hxb2 in sorted(counts):
+        for codon in sorted(counts[hxb2], key=counts[hxb2].get, reverse=True):
+            print(hxb2, codon, counts[hxb2][codon], sep="\t", file=out)
 
 
 # vim: expandtab sw=4 ts=4

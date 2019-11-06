@@ -87,8 +87,8 @@ for gene in hivmmer.genes:
                      stderr=log).returncode
     assert status == 0, "ERROR: hmmsearch exited with status {} - check hmmsearch.{}.log".format(status, gene)
 
-print("Extracting codons from hmmsearch alignments")
 for gene in hivmmer.genes:
+    print("Extracting codons from {} alignment".format(gene))
     with open("alignments/{}.codons.tsv".format(gene), "w") as f:
         hivmmer.codons("sequences/deduplicated.fa",
                        "alignments/{}.txt".format(gene),

@@ -20,13 +20,11 @@ if gene == "pol":
     drmgene[hxb2] = "IN"
 
 # run hmmscan
-hmmer = run(["hmmscan", hmmfile, hxb2file], stdout=PIPE, check=True, encoding="utf8")
+hmmer = run(["hmmscan", "--max", hmmfile, hxb2file], stdout=PIPE, check=True, encoding="utf8")
 
 # parse hmmscan output
 print(hmmer.stdout)
 hmmer = SearchIO.read(StringIO(hmmer.stdout), "hmmer3-text")
-assert len(hmmer.hits) == 1
-assert len(hmmer.hits[0].hsps) == 1
 hsp = hmmer.hits[0].hsps[0]
 scores = hsp.aln_annotation["PP"]
 
@@ -36,7 +34,7 @@ with open(outfile, "w") as f:
   print("hmm", "hxb2", "drm", "drmgene", "ins", "del", "hmmaa", "hxb2aa", "score", sep="\t", file=f)
 
   # Coordinate starts
-  hmm  = 1
+  hmm  = hsp.hit_start + 1
   hxb2 = int(offset)
 
   # Can't start with an insertion or deletion
@@ -77,6 +75,19 @@ with open(outfile, "w") as f:
           hxb2_aa,
           score,
           sep="\t", file=f)
+
+    # Reprint at each hmm coordinate in a deletion
+    for j in range(1, de+1):
+        print(hmm+j,
+              hxb2,
+              drm.get(hxb2, ""),
+              drmgene.get(hxb2, ""),
+              ins,
+              de-j,
+              hmm_aa,
+              hxb2_aa,
+              score,
+              sep="\t", file=f)
 
     i    += 1
     hmm  += 1 + de

@@ -21,13 +21,14 @@ for gene, row in wgs.iterrows():
                  "scratch/reference/{}.hmm.h3p".format(gene)],
                 "scratch/reference/{}.fa".format(gene),
                 "hmmbuild $TARGET $SOURCE && hmmpress $TARGET")
-    env.Command(["scratch/reference/{}.hxb2.tsv".format(gene)],
+    env.Command(["scratch/reference/{}.hxb2.tsv".format(gene),
+                 "scratch/reference/{}.hxb2.log".format(gene)],
                 ["lib/hxb2-index.py",
                  "scratch/reference/{}.hxb2.fa".format(gene),
                  "scratch/reference/{}.hmm".format(gene),
                  Value(gene),
                  Value(int(row.hxb2_start))],
-                "python $SOURCES $TARGETS")
+                "python $SOURCES ${TARGETS[0]} > ${TARGETS[1]}")
                  
 
 # Download 5VM
