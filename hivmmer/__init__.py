@@ -20,8 +20,7 @@ from .codons import codons
 
 __version__ = resources.read_text("hivmmer", "VERSION").strip()
 
-# Genes are ordered by descending size.
-genes = ("pol", "env", "gag", "nef", "vif", "vpr", "vpu", "tat")
+genes = ("gag", "pol", "vif", "vpr", "tat", "vpu", "env", "nef")
 
 def copy_hmms(dst):
     """

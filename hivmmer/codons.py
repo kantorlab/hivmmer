@@ -40,7 +40,7 @@ def _load_hxb2(gene):
     with resources.open_binary("hivmmer", "{}.hxb2.tsv".format(gene)) as f:
         return pd.read_csv(f, sep="\t", usecols=["hmm", "hxb2", "ins", "del"], index_col="hmm")
 
-def codons(readfile, hmmerfile, gene, out=sys.stdout):
+def codons(readfile, hmmerfile, gene):
     """
     """
 
@@ -136,10 +136,10 @@ def codons(readfile, hmmerfile, gene, out=sys.stdout):
                 hmm += coords.loc[hmm, "del"] + 1
 
     # output
-    print("hxb2", "codon", "count", sep="\t", file=out)
+    lines = []
     for hxb2 in sorted(counts):
         for codon in sorted(counts[hxb2], key=counts[hxb2].get, reverse=True):
-            print(hxb2, codon, counts[hxb2][codon], sep="\t", file=out)
-
+            lines.append("\t".join([str(hxb2), codon, str(counts[hxb2][codon])]))
+    return lines
 
 # vim: expandtab sw=4 ts=4
