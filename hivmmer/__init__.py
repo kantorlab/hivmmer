@@ -14,9 +14,10 @@ doi:10.1093/bioinformatics/bty919
 import os
 from importlib import resources
 
+from .table import aa_table
+from .codons import codons
 import hivmmer.filter as filter
 from .translate import translate
-from .codons import codons
 
 __version__ = resources.read_text("hivmmer", "VERSION").strip()
 
