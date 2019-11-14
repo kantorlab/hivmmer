@@ -23,7 +23,7 @@ setup(
     provides=["hivmmer"],
     install_requires=["BioPython>=1.69", "numpy>=1.13.0", "pandas>=0.22.0"],
     packages=find_packages(),
-    package_data={"hivmmer": ["VERSION", "*.hmm.*", "*.tsv"]},
+    package_data={"hivmmer": ["VERSION", "*.csv", "*.hmm.*", "*.tsv"]},
     scripts=["scripts/hivmmer"],
     entry_points={
         "console_scripts": ["hivmmer-filter=hivmmer.filter:_run",
