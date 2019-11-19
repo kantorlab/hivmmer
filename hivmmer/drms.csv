@@ -1,4 +1,4 @@
-region,position,consensus,variants,drug,IAS,Stanford,SDRM
+region,position,consensus,variant,drug,IAS,Stanford,SDRM
 PR,23,L,I,PI,0,0,1
 PR,24,L,I,PI,0,0,1
 PR,30,D,N,PI,1,1,1

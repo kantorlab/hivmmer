@@ -21,7 +21,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Topic :: Scientific/Engineering :: Bio-Informatics"],
     provides=["hivmmer"],
-    install_requires=["BioPython>=1.69", "numpy>=1.13.0", "pandas>=0.22.0"],
+    install_requires=["BioPython>=1.69", "numpy>=1.13.0", "openpyxl", "pandas>=0.22.0", "xlrd"],
     packages=find_packages(),
     package_data={"hivmmer": ["VERSION", "*.csv", "*.hmm.*", "*.tsv"]},
     scripts=["scripts/hivmmer"],

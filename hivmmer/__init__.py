@@ -16,6 +16,7 @@ from importlib import resources
 
 from .table import aa_table
 from .codons import codons
+from .drms import drms
 import hivmmer.filter as filter
 from .translate import translate
 
