@@ -31,3 +31,4 @@ def drms(aafile, outfile, coverage=10, frequency=0.01):
     aa = aa.merge(_load_drm_list(), on=["region", "position", "variant"], how="inner")
     aa.to_csv(outfile, index=False)
 
+# vim: expandtab sw=4 ts=4

@@ -18,6 +18,7 @@ from .table import aa_table
 from .codons import codons
 from .drms import drms
 import hivmmer.filter as filter
+import hivmmer.report as report
 from .translate import translate
 
 __version__ = resources.read_text("hivmmer", "VERSION").strip()

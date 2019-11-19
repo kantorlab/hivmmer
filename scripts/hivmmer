@@ -53,6 +53,7 @@ if __name__ == "__main__":
     os.makedirs("sequences", exist_ok=True)
     os.makedirs("references", exist_ok=True)
     os.makedirs("alignments", exist_ok=True)
+    os.makedirs("report", exist_ok=True)
 
     print("Running PEAR on FASTQ inputs:")
     print(fastq1)
@@ -103,7 +104,7 @@ if __name__ == "__main__":
                                  gene)
                   for gene in hivmmer.genes]
 
-    print("Merging codons")
+    print("Merging codons across genes")
     with open("codons.tsv", "w") as f:
         print("hxb2", "codon", "count", sep="\t", file=f)
         for lines in codons:
@@ -114,6 +115,16 @@ if __name__ == "__main__":
 
     print("Identifying DRMs in AA table")
     hivmmer.drms("aa.xlsx", "drms.csv")
+
+    print("Plotting coverage")
+    hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
+
+    print("Plotting DRMs/SDRMs")
+    drm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "report/drms.pdf")
+    sdrm = hivmmer.report.plot_sdrms("aa.xlsx", "drms.csv", "report/sdrms.pdf")
+
+    print("Compiling PDF report")
+    hivmmer.report.compile(fastq1, fastq2, "report/coverage.pdf", drm, sdrm, "report", "report.pdf")
 
     print("Finished.")
 
