@@ -35,7 +35,6 @@ def plot_coverage(codonfile, outfile, min_coverage=10):
     # Initialize plot
     sns.set_style("ticks")
     fig, ax = plt.subplots(1, 1, figsize=(10, 4))
-    ax.set_title("Coverage", loc="left", fontsize=16)
 
     # Draw coverage
     xlim = (min(_genes.values()), _end)
@@ -202,21 +201,18 @@ def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
     tex = r"""
            \documentclass{article}[11pt]
            \usepackage[letterpaper, margin=1in]{geometry}
-           \usepackage{helvet}
            \usepackage{graphicx}
-           \renewcommand*\familydefault{\sfdefault}
+           \usepackage{fontspec}
+           \setmainfont{Open Sans}
            \begin{document}
            \subsection*{Input files}
            \begin{tabular}{ll}
-           \hline
            \bf FASTQ1 & %s \\
            Size & %.1f MB \\
-           Last modified & %s \\
-           \hline
+           Last modified & %s \\[6pt]
            \bf FASTQ2 & %s \\
            Size & %.1f MB \\
            Last modified & %s \\
-           \hline
            \end{tabular}
            \subsection*{Coverage}
            \includegraphics[width=6.5in]{%s}
@@ -230,13 +226,17 @@ def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
                   coveragefile, drm, sdrm)
 
     # Write tex to flie
-    with open(os.path.join(workdir, "report.tex"), "w") as f:
-        f.write(tex)
+    texfile = os.path.join(workdir, "report.tex")
+    with open(texfile, "w") as f:
+        f.write(tex.replace("_", "\_"))
 
-    # Run pdflatex
-    with open(os.path.join(workdir, "pdflatex.log"), "w") as f:
-        run(["pdflatex", "-jobname=" + outfile, "report.tex"],
-            stdout=f, stderr=f, check=True, cwd=workdir)
+    # Run tectonic
+    with open(os.path.join(workdir, "tectonic.log"), "w") as f:
+        run(["tectonic", texfile], stdout=f, stderr=f, check=True)
+
+    outfile = os.path.abspath(outfile)
+    os.rename(os.path.join(workdir, "report.pdf"), outfile)
+    return outfile
 
 
 # vim: expandtab sw=4 ts=4

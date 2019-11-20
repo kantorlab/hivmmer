@@ -127,7 +127,7 @@ if __name__ == "__main__":
     sdrm = hivmmer.report.plot_sdrms("aa.xlsx", "drms.csv", "report/sdrms.pdf")
 
     print("Compiling PDF report")
-    hivmmer.report.compile(fastq1, fastq2, "report/coverage.pdf", drm, sdrm, "report", "report.pdf")
+    hivmmer.report.compile(fastq1, fastq2, "coverage.pdf", drm, sdrm, "report", "report.pdf")
 
     print("Finished.")
 
