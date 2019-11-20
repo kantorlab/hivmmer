@@ -16,6 +16,7 @@ from importlib import resources
 
 from .table import aa_table
 from .codons import codons
+from .consensus import consensus
 from .drms import drms
 import hivmmer.filter as filter
 import hivmmer.report as report

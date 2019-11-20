@@ -110,6 +110,9 @@ if __name__ == "__main__":
         for lines in codons:
             print("\n".join(lines), file=f)
 
+    print("Generating consensus sequences")
+    hivmmer.consensus("codons.tsv", "consensus.fa")
+
     print("Generating AA table")
     hivmmer.aa_table("codons.tsv", "aa.xlsx")
 
