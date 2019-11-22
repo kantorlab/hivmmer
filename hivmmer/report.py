@@ -159,7 +159,7 @@ def plot_drms(aafile, drmfile, outfile):
         drm.loc[(drm.IAS == 1) & (drm.Stanford == 0), "color"] = "b"
         drm.loc[(drm.IAS == 1) & (drm.Stanford == 1), "color"] = "m"
         _plot_drms(aa, drm, outfile)
-        return outfile
+        return os.path.basename(outfile)
     else:
         return None
 
@@ -175,7 +175,7 @@ def plot_sdrms(aafile, drmfile, outfile):
     if len(sdrm) > 0:
         sdrm["color"] = "r"
         _plot_drms(aa, sdrm, outfile)
-        return outfile
+        return os.path.basename(outfile)
     else:
         return None
 
@@ -205,7 +205,9 @@ def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
            \usepackage{fontspec}
            \setmainfont{Open Sans}
            \begin{document}
+
            \subsection*{Input files}
+
            \begin{tabular}{ll}
            \bf FASTQ1 & %s \\
            Size & %.1f MB \\
@@ -214,12 +216,32 @@ def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
            Size & %.1f MB \\
            Last modified & %s \\
            \end{tabular}
+
            \subsection*{Coverage}
            \includegraphics[width=6.5in]{%s}
+
+           \newpage
+
            \subsection*{DRMs}
            %s
+
+           \begin{tabular}{ll}
+           \bf PI & (placeholder) \\
+           \bf NRTI & (placeholder) \\
+           \bf NNRTI & (placeholder) \\
+           \bf INSTI & (placeholder) \\
+           \end{tabular}
+
            \subsection*{SDRMs}
            %s
+
+           \begin{tabular}{ll}
+           \bf PI & (placeholder) \\
+           \bf NRTI & (placeholder) \\
+           \bf NNRTI & (placeholder) \\
+           \bf INSTI & (placeholder) \\
+           \end{tabular}
+
            \end{document}
            """ % (fastq1, st_fastq1.st_size / 1048576, time.ctime(st_fastq1.st_mtime),
                   fastq2, st_fastq2.st_size / 1048576, time.ctime(st_fastq2.st_mtime),
