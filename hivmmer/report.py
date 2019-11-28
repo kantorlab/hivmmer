@@ -63,13 +63,18 @@ def plot_coverage(codonfile, outfile, min_coverage=10):
     plt.close()
 
 
-def _plot_drms(aa, drm, outfile):
+def plot_drms(aafile, drmfile, column, outfile):
     """
-    Common plotting routine for plot_drms() and plot_sdrms().
+    Write a PDF plot to `outfile` showing DRMs identified by `column`.
+    Return a dictionary of DRMs by PI/NRTI/NNRTI/INSTI.
     """
+    aa = pd.read_excel(aafile)
+    drm = pd.read_csv(drmfile)
+    drm = drm[drm[column] == 1]
+
     # Initialize plot
     sns.set_style("ticks")
-    fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, figsize=(15, 6), gridspec_kw={"height_ratios": [1, 4]})
+    fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, figsize=(15, 5), gridspec_kw={"height_ratios": [1, 4]})
 
     # Serialize the X coordinates for PR, RT, IN
     aa["x"] = aa["position"]
@@ -136,51 +141,25 @@ def _plot_drms(aa, drm, outfile):
     ax2.scatter(aa["x"], 100*aa["frequency"], ec="k", alpha=0.5, marker=".", fc="none")
 
     # Annotate DRMs
-    ax2.scatter(drm["x"], 100*drm["frequency"], fc=drm["color"], marker=".", ec="none")
-    ax2.scatter(drm["x"], 100*drm["frequency"], ec=drm["color"], marker="o", fc="none")
+    if len(drm) > 0:
+        ax2.scatter(drm["x"], 100*drm["frequency"], fc="r", marker=".", ec="none")
+        ax2.scatter(drm["x"], 100*drm["frequency"], ec="r", marker="o", fc="none")
 
     # Finalize and write to file
     plt.tight_layout()
     plt.savefig(outfile)
     plt.close()
 
-
-def plot_drms(aafile, drmfile, outfile):
-    """
-    Write a PDF plot to `outfile` showing DRMs, or return None if no DRMS
-    were found.
-    """
-    aa = pd.read_excel(aafile)
-    drm = pd.read_csv(drmfile)
-    drm = drm[(drm.IAS == 1) | (drm.Stanford == 1)]
-
-    if len(drm) > 0:
-        drm["color"] = "r"
-        drm.loc[(drm.IAS == 1) & (drm.Stanford == 0), "color"] = "b"
-        drm.loc[(drm.IAS == 1) & (drm.Stanford == 1), "color"] = "m"
-        _plot_drms(aa, drm, outfile)
-        return os.path.basename(outfile)
-    else:
-        return None
+    drms = defaultdict(list)
+    for row in drms.itertuples():
+        drms[drug].append("".join((row.consensus, row.position, row.variant)))
+    return dict((drug, ", ".join(drms[drug])) for drug in drms)
 
 
-def plot_sdrms(aafile, drmfile, outfile):
-    """
-    Write a PDF plot to `outfile` showing SDRMs, or return None if no SDRMS
-    were found.
-    """
-    aa = pd.read_excel(aafile)
-    sdrm = pd.read_csv(drmfile)
-    sdrm = sdrm[sdrm.SDRM == 1]
-    if len(sdrm) > 0:
-        sdrm["color"] = "r"
-        _plot_drms(aa, sdrm, outfile)
-        return os.path.basename(outfile)
-    else:
-        return None
-
-
-def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
+def compile(fastq1, fastq2,
+            coveragefile, drmsfile, drmifile, sdrmfile,
+            drms, drmi, sdrm,
+            workdir, outfile):
     """
     Write a PDF report to `outfile` containing coverage, DRM, and SDRM plots.
     """
@@ -222,30 +201,43 @@ def compile(fastq1, fastq2, coveragefile, drmfile, sdrmfile, workdir, outfile):
 
            \newpage
 
-           \subsection*{DRMs}
-           %s
+           \subsection*{DRMs (Stanford)}
+           \includegraphics[width=6.5in]{%s}
 
            \begin{tabular}{ll}
-           \bf PI & (placeholder) \\
-           \bf NRTI & (placeholder) \\
-           \bf NNRTI & (placeholder) \\
-           \bf INSTI & (placeholder) \\
+           \bf PI & %s \\
+           \bf NRTI & %s \\
+           \bf NNRTI & %s \\
+           \bf INSTI & %s \\
            \end{tabular}
 
-           \subsection*{SDRMs}
-           %s
+           \subsection*{DRMs (IAS)}
+           \includegraphics[width=6.5in]{%s}
 
            \begin{tabular}{ll}
-           \bf PI & (placeholder) \\
-           \bf NRTI & (placeholder) \\
-           \bf NNRTI & (placeholder) \\
-           \bf INSTI & (placeholder) \\
+           \bf PI & %s \\
+           \bf NRTI & %s \\
+           \bf NNRTI & %s \\
+           \bf INSTI & %s \\
+           \end{tabular}
+
+           \subsection*{SDRMs (Stanford)}
+           \includegraphics[width=6.5in]{%s}
+
+           \begin{tabular}{ll}
+           \bf PI & %s \\
+           \bf NRTI & %s \\
+           \bf NNRTI & %s \\
+           \bf INSTI & %s \\
            \end{tabular}
 
            \end{document}
            """ % (fastq1, st_fastq1.st_size / 1048576, time.ctime(st_fastq1.st_mtime),
                   fastq2, st_fastq2.st_size / 1048576, time.ctime(st_fastq2.st_mtime),
-                  coveragefile, drm, sdrm)
+                  coveragefile,
+                  drmsfile, drms["PI"], drms["NRTI"], drms["NNRTI"], drms["INSTI"],
+                  drmifile, drmi["PI"], drmi["NRTI"], drmi["NNRTI"], drmi["INSTI"],
+                  sdrmfile, sdrm["PI"], sdrm["NRTI"], sdrm["NNRTI"], sdrm["INSTI"])
 
     # Write tex to flie
     texfile = os.path.join(workdir, "report.tex")

@@ -42,6 +42,8 @@ if __name__ == "__main__":
 
     if args.threads > cpu_count():
         print("WARNING: --threads {} is larger than cpu count {}".format(args.threads, cpu_count()))
+    elif args.threads > 1:
+        pool = Pool(processes=args.threads)
 
     ### PIPELINE ###
 
@@ -96,8 +98,7 @@ if __name__ == "__main__":
                        os.path.abspath("alignments/{}.txt".format(gene)),
                        gene)
                       for gene in hivmmer.genes]
-        with Pool(processes=args.threads) as p:
-            codons = p.starmap(hivmmer.codons, alignments)
+        codons = pool.starmap(hivmmer.codons, alignments)
     else:
         codons = [hivmmer.codons("sequences/deduplicated.fa", 
                                  "alignments/{}.txt".format(gene),
@@ -123,11 +124,18 @@ if __name__ == "__main__":
     hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
 
     print("Plotting DRMs/SDRMs")
-    drm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "report/drms.pdf")
-    sdrm = hivmmer.report.plot_sdrms("aa.xlsx", "drms.csv", "report/sdrms.pdf")
+    drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms-stanford.pdf")
+    drmi = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "IAS", "report/drms-ias.pdf")
+    sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrms.pdf")
 
     print("Compiling PDF report")
-    hivmmer.report.compile(fastq1, fastq2, "coverage.pdf", drm, sdrm, "report", "report.pdf")
+    hivmmer.report.compile(fastq1, fastq2,
+                           "coverage.pdf", "drms-stanford.pdf", "drms-ias.pdf", "sdrms.pdf",
+                           drms, drmi, sdrm,
+                           "report", "report.pdf")
+
+    if args.threads > 1:
+        pool.close()
 
     print("Finished.")
 
