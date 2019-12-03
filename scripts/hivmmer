@@ -124,13 +124,13 @@ if __name__ == "__main__":
     hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
 
     print("Plotting DRMs/SDRMs")
-    drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms-stanford.pdf")
-    drmi = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "IAS", "report/drms-ias.pdf")
-    sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrms.pdf")
+    drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms.pdf")
+    drmi = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "IAS", "report/drmi.pdf")
+    sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrm.pdf")
 
     print("Compiling PDF report")
     hivmmer.report.compile(fastq1, fastq2,
-                           "coverage.pdf", "drms-stanford.pdf", "drms-ias.pdf", "sdrms.pdf",
+                           "coverage.pdf", "drms.pdf", "drmi.pdf", "sdrm.pdf",
                            drms, drmi, sdrm,
                            "report", "report.pdf")
 
