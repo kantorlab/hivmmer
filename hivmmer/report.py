@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import seaborn as sns
 import time
+from collections import defaultdict
 from matplotlib.ticker import FixedLocator
 from subprocess import run
 
@@ -151,8 +152,8 @@ def plot_drms(aafile, drmfile, column, outfile):
     plt.close()
 
     drms = defaultdict(list)
-    for row in drms.itertuples():
-        drms[drug].append("".join((row.consensus, row.position, row.variant)))
+    for row in drm.itertuples():
+        drms[row.drug].append("".join(map(str, [row.consensus, row.position, row.variant])))
     return dict((drug, ", ".join(drms[drug])) for drug in drms)
 
 
@@ -167,22 +168,12 @@ def compile(fastq1, fastq2,
     st_fastq1 = os.stat(fastq1)
     st_fastq2 = os.stat(fastq2)
 
-    if drmfile is not None:
-        drm = r"\includegraphics[width=6.5in]{%s}" % drmfile
-    else:
-        drm = "None found."
-
-    if sdrmfile is not None:
-        sdrm = r"\includegraphics[width=6.5in]{%s}" % sdrmfile
-    else:
-        sdrm = "None found."
-
     tex = r"""
            \documentclass{article}[11pt]
            \usepackage[letterpaper, margin=1in]{geometry}
            \usepackage{graphicx}
            \usepackage{fontspec}
-           \setmainfont{Open Sans}
+           \setmainfont{Nimbus Sans L}
            \begin{document}
 
            \subsection*{Input files}
@@ -235,9 +226,9 @@ def compile(fastq1, fastq2,
            """ % (fastq1, st_fastq1.st_size / 1048576, time.ctime(st_fastq1.st_mtime),
                   fastq2, st_fastq2.st_size / 1048576, time.ctime(st_fastq2.st_mtime),
                   coveragefile,
-                  drmsfile, drms["PI"], drms["NRTI"], drms["NNRTI"], drms["INSTI"],
-                  drmifile, drmi["PI"], drmi["NRTI"], drmi["NNRTI"], drmi["INSTI"],
-                  sdrmfile, sdrm["PI"], sdrm["NRTI"], sdrm["NNRTI"], sdrm["INSTI"])
+                  drmsfile, drms.get("PI", "None"), drms.get("NRTI", "None"), drms.get("NNRTI", "None"), drms.get("INSTI", "None"),
+                  drmifile, drmi.get("PI", "None"), drmi.get("NRTI", "None"), drmi.get("NNRTI", "None"), drmi.get("INSTI", "None"),
+                  sdrmfile, sdrm.get("PI", "None"), sdrm.get("NRTI", "None"), sdrm.get("NNRTI", "None"), sdrm.get("INSTI", "None"))
 
     # Write tex to flie
     texfile = os.path.join(workdir, "report.tex")
