@@ -117,18 +117,24 @@ was created using the commands:
 The resulting pHMM `HIV1_ALL_2016_2253-3870_DNA.trimmed.aa.hmm` can then be
 passed to `hivmmer` as with the `--ref` option.
 
+## Funding
+
+Development of hivmmer is made possible through funding from the National
+Institutes of Health under awards R01AI108441, R01AI120792, R01AI147333, and
+the Providence/Boston Center for AIDS Research (P30AI042853).
+
 ## Authors
 
-Mark Howison <mhowison@ripl.org>
+Mark Howison (<mhowison@ripl.org>)
 
 For bug reports and questions, please create an
-[issue on Github](https://github.com/kantorlab/hivmmer/issues)
+[issue on Github](https://github.com/kantorlab/hivmmer/issues).
 
 ## License
 
 Copyright 2018, Brown University, Providence, RI. All Rights Reserved.
 
-Copyright 2019, Innovative Policy Lab (d/b/a Research Improving People's Lives), Providence, RI. All Rights Reserved.
+Copyright 2019-2020, Innovative Policy Lab (d/b/a Research Improving People's Lives), Providence, RI. All Rights Reserved.
 
 See LICENSE for full terms of use.
 
