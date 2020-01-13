@@ -1,0 +1,8 @@
+region,position,variant,frequency,consensus,drug,IAS,Stanford,SDRM
+PR,24,L,0.1,I,PI,0,0,1
+PR,47,I,0.2,A,PI,1,1,1
+RT,65,K,0.3,R,NRTI,1,1,1
+RT,65,K,0.7,E,NRTI,1,0,0
+RT,181,Y,0.5,I,NNRTI,1,1,1
+IN,143,Y,0.2,S,INSTI,0,0,1
+IN,147,S,0.9,G,INSTI,1,1,1

@@ -1,89 +1,142 @@
-#!/bin/bash
-set -e
-VERSION="0.1.3"
+#!/usr/bin/env python
+import argparse
+import hivmmer
+import os
+from multiprocessing import cpu_count, Pool
+from subprocess import run
 
-### ARGUMENTS ###
+if __name__ == "__main__":
 
-function usage() {
-  echo "\
-usage: hivmmer --id ID --fq1 FASTQ1 --fq2 FASTQ2 --ref REFERENCE [--cpu N]
-               [--region REGION] [--allow-stop-codons]
-               [-h|--help] [-v|--version]
+    ### ARGUMENTS ###
 
-"
-}
+    parser = argparse.ArgumentParser(description=hivmmer.__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("FASTQ1",
+                        help="FASTQ file with forward Illumina reads")
+    parser.add_argument("FASTQ2",
+                        help="FASTQ file with reverse Illumina reads")
+    parser.add_argument("-o", "--outdir",
+                        default=os.getcwd(),
+                        help="output directory [current directory]")
+    parser.add_argument("-t", "--threads",
+                        default=1,
+                        metavar="N",
+                        type=int,
+                        help="number of threads [1]")
+    parser.add_argument("-l", "--min-length",
+                        default=75,
+                        metavar="L",
+                        type=int,
+                        help="minimum read length to retain [75]")
+    parser.add_argument("-q", "--min-quality",
+                        default=25,
+                        metavar="Q",
+                        type=int,
+                        help="minimum mean quality score to retain [25]")
+    parser.add_argument("-v", "--version",
+                        action="version",
+                        version="hivmmer {}".format(hivmmer.__version__))
+    args = parser.parse_args()
+    fastq1 = os.path.abspath(args.FASTQ1)
+    fastq2 = os.path.abspath(args.FASTQ2)
 
-OPTS=`getopt -o hv --long help,version,id:,fq1:,fq2:,ref:,cpu:,region:,allow-stop-codons -n 'parse-options' -- "$@"`
-eval set -- "$OPTS"
+    if args.threads > cpu_count():
+        print("WARNING: --threads {} is larger than cpu count {}".format(args.threads, cpu_count()))
+    elif args.threads > 1:
+        pool = Pool(processes=args.threads)
 
-ID=
-FQ1=
-FQ2=
-REF=
-CPU=1
-REGION=pol
-STOPC=
+    ### PIPELINE ###
 
-while true; do
-  case "$1" in
-    -h|--help) usage; exit 0 ;;
-    -v|--version) echo "hivmmer $VERSION"; exit 0 ;;
-    --id)  ID="$2";  shift 2 ;;
-    --fq1) FQ1="$2"; shift 2 ;;
-    --fq2) FQ2="$2"; shift 2 ;;
-    --ref) REF="$2"; shift 2 ;;
-    --cpu) CPU="$2"; shift 2 ;;
-    --region) REGION="$2"; shift 2 ;;
-    --allow-stop-codons) STOPC="--allow-stop-codons"; shift 1 ;;
-    --) shift; break ;;
-    *) break ;;
-  esac
-done
+    print("Creating output directories in:")
+    print(os.path.abspath(args.outdir))
+    os.makedirs(args.outdir, exist_ok=True)
+    os.chdir(args.outdir)
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("sequences", exist_ok=True)
+    os.makedirs("references", exist_ok=True)
+    os.makedirs("alignments", exist_ok=True)
+    os.makedirs("report", exist_ok=True)
 
-echo "ID:     $ID"
-echo "FQ1:    $FQ1"
-echo "FQ2:    $FQ2"
-echo "REF:    $REF"
-echo "CPU:    $CPU"
-echo "REGION: $REGION"
-echo "STOPC:  $STOPC"
+    print("Running PEAR on FASTQ inputs:")
+    print(fastq1)
+    print(fastq2)
+    with open("logs/pear.log", "w") as log:
+        status = run(["pear", "-y", "1G", "-f", fastq1, "-r", fastq1, "-o", "sequences/pear", "-k", "-j", str(args.threads)],
+                     stdout=log,
+                     stderr=log).returncode
+    assert status == 0, "ERROR: PEAR exited with status {} - check pear.log".format(status)
 
-if [ -z "$ID" ] || [ -z "$FQ1" ] || [ -z "$FQ2" ] || [ -z "$REF" ]
-then
-  usage
-  exit 1
-fi
+    print("Filtering and deduplicating PEAR sequences")
+    keep = {}
+    for pearfile in ("assembled", "unassembled.forward", "unassembled.reverse"):
+        hivmmer.filter.add("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
+    with open("sequences/deduplicated.fa", "w") as f:
+        hivmmer.filter.tofasta(keep, f)
 
-### PIPELINE ###
+    print("Translating deduplicated sequences to amino acid sequences")
+    with open("sequences/translated.pfa", "w") as f, open("logs/translate.log", "w") as log:
+        hivmmer.translate("sequences/deduplicated.fa", 1, f, log)
 
-echo "### STAGE 1: PEAR ###"
+    print("Copying pHMM references")
+    hivmmer.copy_hmms("references")
 
-pear -y 3G -f "$FQ1" -r "$FQ2" -o ${ID}.pear -k -j $CPU
+    for gene in hivmmer.genes:
+        print("Aligning {} with hmmsearch".format(gene))
+        with open("logs/hmmsearch.{}.log".format(gene), "w") as log:
+            status = run(["hmmsearch", "--max",
+                          "--cpu", str(args.threads),
+                          "-o", "alignments/{}.txt".format(gene),
+                          "references/{}.hmm".format(gene),
+                          "sequences/translated.pfa"],
+                         stdout=log,
+                         stderr=log).returncode
+        assert status == 0, "ERROR: hmmsearch exited with status {} - check hmmsearch.{}.log".format(status, gene)
 
-echo "### STAGE 2: QC FILTERING AND DEDUPE ###"
+    print("Extracting codons from hmmsearch alignments")
+    if args.threads > 1:
+        alignments = [(os.path.abspath("sequences/deduplicated.fa"),
+                       os.path.abspath("alignments/{}.txt".format(gene)),
+                       gene)
+                      for gene in hivmmer.genes]
+        codons = pool.starmap(hivmmer.codons, alignments)
+    else:
+        codons = [hivmmer.codons("sequences/deduplicated.fa", 
+                                 "alignments/{}.txt".format(gene),
+                                 gene)
+                  for gene in hivmmer.genes]
 
-hivmmer-filter ${ID}.pear.assembled.fastq ${ID}.pear.unassembled.forward.fastq ${ID}.pear.unassembled.reverse.fastq >${ID}.collapsed.fa
+    print("Merging codons across genes")
+    with open("codons.tsv", "w") as f:
+        print("hxb2", "codon", "count", sep="\t", file=f)
+        for lines in codons:
+            print("\n".join(lines), file=f)
 
-echo "### STAGE 3: TRANSLATE ###"
+    print("Generating consensus sequences")
+    hivmmer.consensus("codons.tsv", "consensus.fa")
 
-hivmmer-translate $STOPC ${ID}.collapsed.fa >${ID}.collapsed.pfa
+    print("Generating AA table")
+    hivmmer.aa_table("codons.tsv", "aa.xlsx")
 
-echo "### STAGE 4: HMMSEARCH, ROUND 1 ###"
+    print("Identifying DRMs in AA table")
+    hivmmer.drms("aa.xlsx", "drms.csv")
 
-hmmsearch --cpu $CPU --max --notextw -A ${ID}.hmmsearch1.sto -o ${ID}.hmmsearch1.txt "$REF" ${ID}.collapsed.pfa
-hmmemit -c "$REF" >${ID}.hmmsearch1.ref.consensus.fa
-hmmbuild --cpu $CPU ${ID}.hmmsearch1.hmm ${ID}.hmmsearch1.sto
+    print("Plotting coverage")
+    hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
 
-echo "### STAGE 5: HMMSEARCH, ROUND 2 ###"
+    print("Plotting DRMs/SDRMs")
+    drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms.pdf")
+    drmi = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "IAS", "report/drmi.pdf")
+    sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrm.pdf")
 
-hmmsearch --cpu $CPU -E 1000000 --domE 1000000 --max --notextw -A ${ID}.hmmsearch2.sto -o ${ID}.hmmsearch2.txt ${ID}.hmmsearch1.hmm ${ID}.collapsed.pfa
-hmmemit -c ${ID}.hmmsearch1.hmm >${ID}.hmmsearch2.ref.consensus.fa
-hmmbuild --cpu $CPU ${ID}.hmmsearch2.hmm ${ID}.hmmsearch2.sto
+    print("Compiling PDF report")
+    hivmmer.report.compile(fastq1, fastq2,
+                           "coverage.pdf", "drms.pdf", "drmi.pdf", "sdrm.pdf",
+                           drms, drmi, sdrm,
+                           "report", "report.pdf")
 
-echo "### STAGE 6: CODON TABLE ###"
+    if args.threads > 1:
+        pool.close()
 
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch1.txt --ref ${ID}.hmmsearch1.ref.consensus.fa --region $REGION &
-hivmmer-codons --reads ${ID}.collapsed.fa --hmmer ${ID}.hmmsearch2.txt --ref ${ID}.hmmsearch2.ref.consensus.fa --region $REGION &
-wait
+    print("Finished.")
 
-echo "### FINISHED ###"
+# vim: expandtab sw=4 ts=4

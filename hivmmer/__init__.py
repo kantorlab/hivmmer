@@ -9,15 +9,22 @@ Please cite:
 Howison M, Coetzer M, Kantor R. 2019. Measurement error and variant-calling in
 deep Illumina sequencing of HIV. Bioinformatics 35(12): 2029-2035.
 doi:10.1093/bioinformatics/bty919
-
 """
 
 import os
 from importlib import resources
 
-__version__ = resources.read_text(__name__, "VERSION").strip()
+from .table import aa_table
+from .codons import codons
+from .consensus import consensus
+from .drms import drms
+import hivmmer.filter as filter
+import hivmmer.report as report
+from .translate import translate
 
-genes = ("env", "gag", "nef", "pol", "tat", "vif", "vpr", "vpu")
+__version__ = resources.read_text("hivmmer", "VERSION").strip()
+
+genes = ("gag", "pol", "vif", "vpr", "tat", "vpu", "env", "nef")
 
 def copy_hmms(dst):
     """
@@ -27,6 +34,6 @@ def copy_hmms(dst):
         for ext in ("h3f", "h3i", "h3m", "h3p"):
             fname = "{}.hmm.{}".format(gene, ext)
             with open(os.path.join(dst, fname), "wb") as f1:
-                with resources.open_binary(__name__, fname) as f2:
+                with resources.open_binary("hivmmer", fname) as f2:
                     f1.write(f2.read())
 
