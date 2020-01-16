@@ -120,8 +120,11 @@ if __name__ == "__main__":
     print("Identifying DRMs in AA table")
     hivmmer.drms("aa.xlsx", "drms.csv")
 
-    print("Plotting coverage")
+    print("Plotting WGS coverage")
     hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
+
+    print("Plotting PRRT coverage")
+    hivmmer.report.plot_coverage_prrt("aa.xlsx", "report/coverage-prrt.pdf")
 
     print("Plotting DRMs/SDRMs")
     drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms.pdf")
@@ -130,7 +133,8 @@ if __name__ == "__main__":
 
     print("Compiling PDF report")
     hivmmer.report.compile(fastq1, fastq2,
-                           "coverage.pdf", "drms.pdf", "drmi.pdf", "sdrm.pdf",
+                           "coverage.pdf", "coverage-prrt.pdf",
+                           "drms.pdf", "drmi.pdf", "sdrm.pdf",
                            drms, drmi, sdrm,
                            "report", "report.pdf")
 
