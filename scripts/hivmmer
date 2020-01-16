@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     print("Translating deduplicated sequences to amino acid sequences")
     with open("sequences/translated.pfa", "w") as f, open("logs/translate.log", "w") as log:
-        hivmmer.translate("sequences/deduplicated.fa", 1, f, log)
+        hivmmer.translate("sequences/deduplicated.fa", f, log)
 
     print("Copying pHMM references")
     hivmmer.copy_hmms("references")

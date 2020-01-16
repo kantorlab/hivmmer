@@ -4,10 +4,10 @@ from Bio import Seq
 from Bio import SeqIO
 
 
-def translate(filename, allow_stop_codons, out=sys.stdout, log=sys.stderr):
+def translate(filename, out=sys.stdout, log=sys.stderr):
     """
     Translate nucleotide sequences in FASTA file `filename` to all six possible
-    frames, excluding any that have > `allow_stop_codons` stop codons.
+    frames.
 
     Write amino acid sequences to FASTA file `out`, with the frame number
     appended to the sequence header.
@@ -15,43 +15,30 @@ def translate(filename, allow_stop_codons, out=sys.stdout, log=sys.stderr):
     Log summary statistics to file `log`.
     """
 
-    nskipped = {"N": 0, "*": 0}
+    nskipped = 0
 
     for n, record in enumerate(SeqIO.parse(filename, "fasta")):
 
-        nstop = 0
         seq = str(record.seq)
 
         if 'N' in seq:
-            nskipped["N"] += 1
+            nskipped += 1
             continue
 
         for i in range(3):
             j = 3 * ((len(seq) - i) // 3) + i
-            aa = Seq.translate(seq[i:j])
-            if aa.count("*") > 0:
-                nstop += 1
-            else:
-                print(">%s-%d" % (record.id, i), file=out)
-                print(aa, file=out)
+            print(">%s-%d" % (record.id, i), file=out)
+            print(Seq.translate(seq[i:j]), file=out)
 
         seq = str(record.seq.reverse_complement())
 
         for i in range(3):
             j = 3 * ((len(seq) - i) // 3) + i
-            aa = Seq.translate(seq[i:j])
-            if aa.count("*") > allow_stop_codons:
-                nstop += 1
-            else:
-                print(">%s-%d'" % (record.id, i), file=out)
-                print(aa, file=out)
-
-        if nstop == 6:
-            nskipped["*"] += 1
+            print(">%s-%d'" % (record.id, i), file=out)
+            print(Seq.translate(seq[i:j]), file=out)
 
     print("nreads", n, file=log)
-    print("nskipped N", nskipped["N"], file=log)
-    print("nskipped *", nskipped["*"], file=log)
+    print("nskipped (N)", nskipped, file=log)
 
 
 def _run():
@@ -60,11 +47,6 @@ def _run():
     parser.add_argument("FASTA",
                         nargs=1,
                         help="path to nucleotide FASTA file, or '-' to read from stdin")
-    parser.add_argument("--allow-stop-codons",
-                        default=0,
-                        metavar="N",
-                        type=int,
-                        help="# of stop codons to allow [0]")
     args = parser.parse_args()
 
     fasta = args.FASTA[0]
@@ -72,7 +54,7 @@ def _run():
         translate(sys.stdin, args.allow_stop_codons)
     else:
         with open(fasta) as f:
-            translate(f, args.allow_stop_codons)
+            translate(f)
 
 
 # vim: expandtab sw=4 ts=4
