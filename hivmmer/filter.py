@@ -40,7 +40,7 @@ def _run():
     parser.add_argument("-q", "--min-quality",
                         default=25,
                         metavar="Q",
-                        type=int,
+                        type=float,
                         help="minimum mean quality score to retain")
     parser.add_argument("FASTQ",
                         nargs="+",
