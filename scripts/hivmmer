@@ -69,7 +69,7 @@ if __name__ == "__main__":
     print("Filtering and deduplicating PEAR sequences")
     keep = {}
     for pearfile in ("assembled", "unassembled.forward", "unassembled.reverse"):
-        hivmmer.filter.add("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
+        hivmmer.filter.mean_filter("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
     with open("sequences/deduplicated.fa", "w") as f:
         hivmmer.filter.tofasta(keep, f)
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrm.pdf")
 
     print("Compiling PDF report")
-    hivmmer.report.compile(fastq1, fastq2,
+    hivmmer.report.compile([fastq1, fastq2],
                            "coverage.pdf", "coverage-prrt.pdf",
                            "drms.pdf", "drmi.pdf", "sdrm.pdf",
                            drms, drmi, sdrm,

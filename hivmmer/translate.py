@@ -63,7 +63,7 @@ def translate_unambiguous(filename, out=sys.stdout, log=sys.stderr, fraction=0.5
         for i in range(3):
             j = 3 * ((len(seq) - i) // 3) + i
             tseq = Seq.translate(seq[i:j])
-            if sum(aa != 'X' for aa in tseq) / len(tseq) > unambiguous:
+            if sum(aa != 'X' for aa in tseq) / len(tseq) > fraction:
                 print(">%s-%d" % (record.id, i), file=out)
                 print(tseq, file=out)
 
@@ -72,7 +72,7 @@ def translate_unambiguous(filename, out=sys.stdout, log=sys.stderr, fraction=0.5
         for i in range(3):
             j = 3 * ((len(seq) - i) // 3) + i
             tseq = Seq.translate(seq[i:j])
-            if sum(aa != 'X' for aa in tseq) / len(tseq) > unambiguous:
+            if sum(aa != 'X' for aa in tseq) / len(tseq) > fraction:
                 print(">%s-%d'" % (record.id, i), file=out)
                 print(tseq, file=out)
 

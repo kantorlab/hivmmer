@@ -4,12 +4,14 @@
 import matplotlib
 matplotlib.rcParams["font.sans-serif"] = ["Nimbus Sans L", "Helvetica", "Arial"]
 
+import hivmmer
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import time
 from collections import defaultdict
+from datetime import datetime
 from matplotlib.ticker import FixedLocator
 from subprocess import run
 
@@ -182,8 +184,7 @@ def plot_drms(aafile, drmfile, column, outfile):
     return dict((drug, ", ".join(drms[drug])) for drug in drms)
 
 
-def compile(fastq1, fastq2,
-            coveragefile, coverageprrtfile,
+def compile(fastq, coveragefile, coverageprrtfile,
             drmsfile, drmifile, sdrmfile,
             drms, drmi, sdrm,
             workdir, outfile):
@@ -191,51 +192,56 @@ def compile(fastq1, fastq2,
     Write a PDF report to `outfile` containing coverage, DRM, and SDRM plots.
     """
 
-    name = os.path.basename(fastq1).partition("_")[0]
-    st_fastq1 = os.stat(fastq1)
-    st_fastq2 = os.stat(fastq2)
+    name = os.path.basename(fastq[0]).partition("_")[0]
+
+    # Summarize FASTQ input files
+    fastq_summary = []
+    for f in fastq:
+        st = os.stat(f)
+        mb = st.st_size / 1048576
+        ts = time.strftime("%-d %b %Y", time.localtime(st.st_mtime))
+        fastq_summary.append(r"%s (%.1f MB, %s) \\" % (f, mb, ts))
+    fastq_summary[-1] = fastq_summary[-1] + "[3pt]"
+    fastq_summary = "\n".join(fastq_summary)
 
     tex = r"""\documentclass{article}
 \usepackage[letterpaper, margin=0.5in]{geometry}
 \usepackage{graphicx}
 \usepackage{fontspec}
 \setmainfont{Nimbus Sans L}
-\usepackage{titlesec}
-\titlespacing*{\section}{0pt}{3pt}{3pt}
-\titlespacing*{\subsection}{0pt}{3pt}{3pt}
+\usepackage[small]{titlesec}
+\titlespacing*{\section}{0pt}{0pt}{0pt}
+\titlespacing*{\subsection}{0pt}{0pt}{0pt}
+\setcounter{secnumdepth}{0}
 
 \begin{document}
 \pagenumbering{gobble}
-\small
+\footnotesize
 
-\section*{Dataset: %s}
-%s (%.1f MB, %s) \\
-%s (%.1f MB, %s) \\[3pt]
+\section{Dataset: %s}
+{\em Report generated on %s by hivmmer %s from input:} \\
+%s
 
-\subsection*{Coverage: Whole Genome}
+\subsection{Coverage: Whole Genome}
 \includegraphics[width=7.5in]{%s}
 
-\subsection*{Coverage: PR/RT/IN}
+\subsection{Coverage: PR/RT/IN}
 \includegraphics[width=7.5in]{%s}
 
 \footnotesize
-\subsection*{DRMs: Stanford}
+\subsection{DRMs: Stanford}
 \textbf{PI}: %s $\;$ \textbf{NRTI}: %s $\;$ \textbf{NNRTI}: %s $\;$ \textbf{INSTI}: %s \\
 \includegraphics[width=7.5in]{%s}
 
-\subsection*{DRMs: IAS}
+\subsection{DRMs: IAS}
 \textbf{PI}: %s $\;$ \textbf{NRTI}: %s $\;$ \textbf{NNRTI}: %s $\;$ \textbf{INSTI}: %s \\
 \includegraphics[width=7.5in]{%s}
 
-\subsection*{SDRMs: Stanford}
+\subsection{SDRMs: Stanford}
 \textbf{PI}: %s $\;$ \textbf{NRTI}: %s $\;$ \textbf{NNRTI}: %s $\;$ \textbf{INSTI}: %s \\
 \includegraphics[width=7.5in]{%s}
-
 \end{document}
-""" % (name,
-       fastq1, st_fastq1.st_size / 1048576, time.strftime("%-d %b %Y", time.localtime(st_fastq1.st_mtime)),
-       fastq2, st_fastq2.st_size / 1048576, time.strftime("%-d %b %Y", time.localtime(st_fastq2.st_mtime)),
-       coveragefile, coverageprrtfile,
+""" % (name, datetime.now().ctime(), hivmmer.__version__, fastq_summary, coveragefile, coverageprrtfile,
        drms.get("PI", "n/a"), drms.get("NRTI", "n/a"), drms.get("NNRTI", "n/a"), drms.get("INSTI", "n/a"),
        drmsfile,
        drmi.get("PI", "n/a"), drmi.get("NRTI", "n/a"), drmi.get("NNRTI", "n/a"), drmi.get("INSTI", "n/a"),

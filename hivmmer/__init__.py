@@ -14,12 +14,12 @@ doi:10.1093/bioinformatics/bty919
 import os
 from importlib import resources
 
-from .table import aa_table
+import hivmmer.filter
+import hivmmer.report
 from .codons import codons
 from .consensus import consensus
 from .drms import drms
-import hivmmer.filter as filter
-import hivmmer.report as report
+from .table import aa_table
 from .translate import translate
 
 __version__ = resources.read_text("hivmmer", "VERSION").strip()
