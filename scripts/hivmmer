@@ -69,13 +69,13 @@ if __name__ == "__main__":
     print("Filtering and deduplicating PEAR sequences")
     keep = {}
     for pearfile in ("assembled", "unassembled.forward", "unassembled.reverse"):
-        hivmmer.filter.add("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
+        hivmmer.filter.mean_filter("sequences/pear.{}.fastq".format(pearfile), args.min_length, args.min_quality, keep)
     with open("sequences/deduplicated.fa", "w") as f:
         hivmmer.filter.tofasta(keep, f)
 
     print("Translating deduplicated sequences to amino acid sequences")
     with open("sequences/translated.pfa", "w") as f, open("logs/translate.log", "w") as log:
-        hivmmer.translate("sequences/deduplicated.fa", 1, f, log)
+        hivmmer.translate("sequences/deduplicated.fa", f, log)
 
     print("Copying pHMM references")
     hivmmer.copy_hmms("references")
@@ -120,8 +120,11 @@ if __name__ == "__main__":
     print("Identifying DRMs in AA table")
     hivmmer.drms("aa.xlsx", "drms.csv")
 
-    print("Plotting coverage")
+    print("Plotting WGS coverage")
     hivmmer.report.plot_coverage("codons.tsv", "report/coverage.pdf")
+
+    print("Plotting PRRT coverage")
+    hivmmer.report.plot_coverage_prrt("aa.xlsx", "report/coverage-prrt.pdf")
 
     print("Plotting DRMs/SDRMs")
     drms = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "Stanford", "report/drms.pdf")
@@ -129,8 +132,9 @@ if __name__ == "__main__":
     sdrm = hivmmer.report.plot_drms("aa.xlsx", "drms.csv", "SDRM", "report/sdrm.pdf")
 
     print("Compiling PDF report")
-    hivmmer.report.compile(fastq1, fastq2,
-                           "coverage.pdf", "drms.pdf", "drmi.pdf", "sdrm.pdf",
+    hivmmer.report.compile([fastq1, fastq2],
+                           "coverage.pdf", "coverage-prrt.pdf",
+                           "drms.pdf", "drmi.pdf", "sdrm.pdf",
                            drms, drmi, sdrm,
                            "report", "report.pdf")
 

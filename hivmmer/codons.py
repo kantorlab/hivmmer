@@ -7,6 +7,7 @@ from Bio import SearchIO
 from Bio import Seq
 from Bio import SeqIO
 from importlib import resources
+from itertools import chain
 
 # For more information on how thresholds were estimated,
 # see `validation/README.md` in the hivmmer git repo.
@@ -54,6 +55,9 @@ def codons(readfile, hmmerfile, gene):
     counts = dict((hxb2, {}) for hxb2 in range(coords.hxb2.iloc[0], coords.hxb2.iloc[-1] + 1, 3))
 
     for hit in hmmer.hits:
+
+        # Skip hits that contain stop codons (indicates wrong frame)
+        if "*" in chain(hsp.aln[1].seq for hsp in hit.hsps): continue
 
         id, _, frame = hit.id.rpartition("-")
         count = int(id.partition("-")[2])
@@ -111,6 +115,7 @@ def codons(readfile, hmmerfile, gene):
                             codon_frame.append(seq[read:read+3])
                             read += 3
                             i += 1
+                            hmm += 1
 
                     while i < (n-1) and hsp.aln[0].seq[i+1] == ".":
                         aa_frame.append(hsp.aln[1].seq[i+1])
@@ -125,15 +130,17 @@ def codons(readfile, hmmerfile, gene):
                     # Iterate through the codon frame
                     if codon_frame:
                         codon = codon_frame.pop(0)
-                        assert str(Seq.translate(codon)) == aa_frame.pop(0).upper()
-                        counts[hxb2][codon] = counts[hxb2].get(codon, 0) + count
+                        aa = aa_frame.pop(0)
+                        if aa != 'X' and 'N' not in codon:
+                            assert str(Seq.translate(codon)) == aa.upper()
+                            counts[hxb2][codon] = counts[hxb2].get(codon, 0) + count
                     # Deletions occur when the codon frame is empty
                     else:
                         counts[hxb2][""] = counts[hxb2].get("", 0) + count
                     hxb2 += 3
 
                 i += 1
-                hmm += coords.loc[hmm, "del"] + 1
+                hmm += 1
 
     # output
     lines = []
