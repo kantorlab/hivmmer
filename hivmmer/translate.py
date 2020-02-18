@@ -41,6 +41,44 @@ def translate(filename, out=sys.stdout, log=sys.stderr):
     print("nskipped (N)", nskipped, file=log)
 
 
+def translate_unambiguous(filename, out=sys.stdout, log=sys.stderr, fraction=0.5):
+    """
+    Translate nucleotide sequences in FASTA file `filename` to all six possible
+    frames.
+
+    Only keep translated sequences with > `fraction` of unambigous amino acids.
+
+    Write amino acid sequences to FASTA file `out`, with the frame number
+    appended to the sequence header.
+
+    Log summary statistics to file `log`.
+    """
+
+    nskipped = 0
+
+    for n, record in enumerate(SeqIO.parse(filename, "fasta")):
+
+        seq = str(record.seq)
+
+        for i in range(3):
+            j = 3 * ((len(seq) - i) // 3) + i
+            tseq = Seq.translate(seq[i:j])
+            if sum(aa != 'X' for aa in tseq) / len(tseq) > unambiguous:
+                print(">%s-%d" % (record.id, i), file=out)
+                print(tseq, file=out)
+
+        seq = str(record.seq.reverse_complement())
+
+        for i in range(3):
+            j = 3 * ((len(seq) - i) // 3) + i
+            tseq = Seq.translate(seq[i:j])
+            if sum(aa != 'X' for aa in tseq) / len(tseq) > unambiguous:
+                print(">%s-%d'" % (record.id, i), file=out)
+                print(tseq, file=out)
+
+    print("nreads", n, file=log)
+
+
 def _run():
 
     parser = argparse.ArgumentParser()

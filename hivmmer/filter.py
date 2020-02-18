@@ -43,6 +43,28 @@ def split_filter(filename, min_length, min_quality, keep={}):
                 start = i
 
 
+def mask_filter(filename, min_quality, keep={}):
+    """
+    Mask bases as N in sequences from `filename` if quality score
+    is < `min_quality`.
+
+    Deduplicates identical subsequences.
+
+    Adds distinct subsequences to dictionary `keep`, with the subsequence
+    count as the value.
+    """
+    for seq in SeqIO.parse(filename, "fastq"):
+        quality = seq.letter_annotations["phred_quality"]
+        masked = []
+        for nt, q in zip(str(seq.seq), quality):
+            if q >= min_quality:
+                masked.append(nt)
+            else:
+                masked.append('N')
+        masked = "".join(masked)
+        keep[masked] = keep.get(masked, 0) + 1
+
+
 def tofasta(keep, f):
     """
     Writes distinct sequences/counts in dictionary `keep` to FASTA file `f`.

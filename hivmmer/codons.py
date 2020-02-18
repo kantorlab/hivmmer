@@ -130,8 +130,10 @@ def codons(readfile, hmmerfile, gene):
                     # Iterate through the codon frame
                     if codon_frame:
                         codon = codon_frame.pop(0)
-                        assert str(Seq.translate(codon)) == aa_frame.pop(0).upper()
-                        counts[hxb2][codon] = counts[hxb2].get(codon, 0) + count
+                        aa = aa_frame.pop(0)
+                        if aa != 'X' and 'N' not in codon:
+                            assert str(Seq.translate(codon)) == aa.upper()
+                            counts[hxb2][codon] = counts[hxb2].get(codon, 0) + count
                     # Deletions occur when the codon frame is empty
                     else:
                         counts[hxb2][""] = counts[hxb2].get("", 0) + count
