@@ -96,8 +96,9 @@ interactive prompt to access to the container.
 hivmmer can be installed with pip using the included setup.py, and has the
 following dependencies on external tools (which must be in your PATH):
 
-* HMMER 3.2.1
-* PEAR 0.9.11
+* [HMMER](http://hmmer.org/) 3.2.1
+* [PEAR](https://cme.h-its.org/exelixis/web/software/pear/) 0.9.11
+* [tectonic](https://tectonic-typesetting.github.io/en-US/) 0.1.11
 
 Note: PEAR source code is available under an academic license from [https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis](https://www.h-its.org/en/research/sco/software/#NextGenerationSequencingSequenceAnalysis).
 
