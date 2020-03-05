@@ -1,7 +1,6 @@
 __pycache__
 hivmmer.egg-info
 dist/
-test/5VM.*
-test/pol.hmm.consensus.fa
+test/out
 validation/scratch
 validation/.sconsign.dblite

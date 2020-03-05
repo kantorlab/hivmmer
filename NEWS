@@ -1,3 +1,15 @@
+[0.2.0]
+* Filters HMMER alignments using optimal E-value thresholds determined
+  through a validation study. (issue-7)
+* Includes prepackaged pHMMs for whole HIV genome. (issue-8)
+* Re-implemented the main hivmmer script in python and added support for
+  whole-genome alignment and additional reporting output. (issue-9)
+* Improves the consistency of whole-genome coverage by passing all translated
+  sequences to HMMER, and removing alignments with stop codons after alignment.
+  This approach retains reads that span one or more genes in different frames,
+  which were dropped in the previous approach since they would have stop codons
+  in the region of the read lying in the other frame. (issue-10)
+
 [0.1.3]
 * Added an output file listing the frequency of specific insertion codons at
   each site (issue-1).
