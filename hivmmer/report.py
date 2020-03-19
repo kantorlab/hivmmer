@@ -109,14 +109,14 @@ def plot_coverage_prrt(aafile, outfile, min_coverage=1000):
     plt.close()
 
 
-def plot_drms(aafile, drmfile, column, outfile):
+def plot_drms(aafile, drmfile, column, outfile, yticks=[0.1, 1, 5, 10, 20, 50, 100], drmfreq=0.01):
     """
     Write a PDF plot to `outfile` showing DRMs identified by `column`.
     Return a dictionary of DRMs by PI/NRTI/NNRTI/INSTI.
     """
     aa = pd.read_excel(aafile)
     drm = pd.read_csv(drmfile)
-    drm = drm[drm[column] == 1]
+    drm = drm[(drm[column] == 1) & (drm["frequency"] >= drmfreq)]
 
     # Initialize plot
     fig, ax = plt.subplots(1, 1, figsize=(15, 3))
@@ -152,10 +152,9 @@ def plot_drms(aafile, drmfile, column, outfile):
     ax.xaxis.set_tick_params(direction="out")
 
     # Y axis
-    yticks = [0.1, 1, 5, 10, 20, 50, 100]
     ax.set_ylabel("AA Frequency", size=14)
     ax.set_yscale("log")
-    ax.set_ylim(0.09, 110)
+    ax.set_ylim(0.9*yticks[0], 1.1*yticks[-1])
     ax.set_yticks(yticks)
     ax.set_yticklabels(['%g%%' % i for i in yticks], size=14)
     ax.get_yaxis().set_tick_params(direction="out")

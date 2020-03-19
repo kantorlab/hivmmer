@@ -20,7 +20,7 @@ from .codons import codons
 from .consensus import consensus
 from .drms import drms
 from .table import aa_table
-from .translate import translate
+from .translate import translate, translate_unambiguous
 
 __version__ = resources.read_text("hivmmer", "VERSION").strip()
 

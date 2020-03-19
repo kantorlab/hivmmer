@@ -41,7 +41,7 @@ def translate(filename, out=sys.stdout, log=sys.stderr):
     print("nskipped (N)", nskipped, file=log)
 
 
-def translate_unambiguous(filename, out=sys.stdout, log=sys.stderr, fraction=0.5):
+def translate_unambiguous(filename, out=sys.stdout, log=sys.stderr, fraction=0.9):
     """
     Translate nucleotide sequences in FASTA file `filename` to all six possible
     frames.
