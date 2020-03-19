@@ -26,7 +26,8 @@ setup(
     package_data={"hivmmer": ["VERSION", "*.csv", "*.hmm.*", "*.tsv"]},
     scripts=["scripts/hivmmer"],
     entry_points={
-        "console_scripts": ["hivmmer-filter=hivmmer.filter:_run",
+        "console_scripts": ["hivmmer-consensus=hivmmer.consensus:_run",
+                            "hivmmer-filter=hivmmer.filter:_run",
                             "hivmmer-translate=hivmmer.translate:_run"]
     }
 )
