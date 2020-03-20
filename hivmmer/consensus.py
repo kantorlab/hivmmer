@@ -26,7 +26,6 @@ def consensus(codonfile, outfile, min_coverage=1000):
 
     # Normalize counts
     codons["frequency"] = codons["count"] * (1.0 / codons["sum"])
-    codons.to_csv("debug.csv")
 
     hxb2 = hivmmer.list_hxb2()
     with open(outfile, "w") as f:
