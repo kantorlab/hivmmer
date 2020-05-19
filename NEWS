@@ -1,3 +1,6 @@
+[0.2.1]
+* Add minimum coverage threshold when calling consensus sequence. (issue-11)
+
 [0.2.0]
 * Filters HMMER alignments using optimal E-value thresholds determined
   through a validation study. (issue-7)

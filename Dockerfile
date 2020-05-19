@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 LABEL maintainer "Mark Howison <mhowison@ripl.org>"
 LABEL repository kantorlab
 LABEL image hivmmer
-LABEL tag v0.2.0
+LABEL tag v0.2.1
 
 RUN apt-get update -y
 RUN apt-get install -y bzip2 util-linux wget
