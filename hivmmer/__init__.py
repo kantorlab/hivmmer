@@ -12,6 +12,7 @@ doi:10.1093/bioinformatics/bty919
 """
 
 import os
+import pandas as pd
 from importlib import resources
 
 import hivmmer.filter
@@ -37,3 +38,14 @@ def copy_hmms(dst):
                 with resources.open_binary("hivmmer", fname) as f2:
                     f1.write(f2.read())
 
+def list_hxb2():
+    """
+    Returns the ordered list of HXB2 coordinates in the prepackaged HMM files.
+    """
+    hxb2 = []
+    for gene in genes:
+        with resources.open_binary("hivmmer", "{}.hxb2.tsv".format(gene)) as f:
+            hxb2 += pd.read_csv(f, sep="\t", usecols=["hxb2"]).hxb2.tolist()
+    return hxb2
+
+# vim: expandtab sw=4 ts=4
